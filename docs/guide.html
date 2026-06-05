@@ -26,6 +26,7 @@
       <a href="#workflow">Workflow</a>
       <a href="#editor">Editor</a>
       <a href="#preview">Preview</a>
+      <a href="#metadata">Fragment metadata</a>
       <a href="#playback">Play All</a>
       <a href="#recovery">Recovery</a>
       <a href="#shortcuts">Shortcuts</a>
@@ -199,6 +200,57 @@
             <h3>Audio choices</h3>
             <p>Keep audio for video fragments when needed, or use audio-only fragments for cue-style playlist sections.</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="metadata" class="section split-section guide-split">
+      <div>
+        <p class="eyebrow">Fragment metadata</p>
+        <h2>The inspector edits the selected fragment, not the whole playlist.</h2>
+        <p>
+          Use this panel to refine one cue at a time. Source status shows whether the file is ready or needs
+          relinking, and the remaining fields stay attached to that fragment so the playlist stays readable.
+        </p>
+        <div class="guide-checklist">
+          <div><strong>Source</strong><span>Shows the file name and whether the media is available or missing.</span></div>
+          <div><strong>Start / End</strong><span>Trim the exact range that belongs in the final fragment.</span></div>
+          <div><strong>Delay</strong><span>Keep the lead-in before this cue in the same fragment row.</span></div>
+          <div><strong>Audio</strong><span>Mute the fragment or keep its sound when you play the playlist.</span></div>
+          <div><strong>Volume / Speed</strong><span>Adjust how loud or fast the fragment plays.</span></div>
+          <div><strong>Label / Notes</strong><span>Add names and notes so the list is easy to scan later.</span></div>
+          <div><strong>Delay color</strong><span>Use color to spot lead-in space quickly in preview and export.</span></div>
+        </div>
+      </div>
+      <div class="guide-metadata-panel">
+        <div class="guide-metadata-card">
+          <div class="guide-metadata-title">Source</div>
+          <div class="guide-metadata-value">speaker-intro.mp4</div>
+          <div class="guide-metadata-note">Available</div>
+        </div>
+        <div class="guide-metadata-grid">
+          <div class="guide-metadata-card compact">
+            <div class="guide-metadata-title">Range</div>
+            <div class="guide-metadata-value">00:01.250 - 00:08.500</div>
+            <div class="guide-metadata-note">Drag the handles to refine it.</div>
+          </div>
+          <div class="guide-metadata-card compact">
+            <div class="guide-metadata-title">Delay</div>
+            <div class="guide-metadata-value">1.5 s</div>
+            <div class="guide-metadata-note">Shown before playback starts.</div>
+          </div>
+        </div>
+        <div class="guide-metadata-grid">
+          <div class="guide-metadata-card compact">
+            <div class="guide-metadata-title">Audio</div>
+            <div class="guide-metadata-value">On</div>
+            <div class="guide-metadata-note">Muted fragments still export correctly.</div>
+          </div>
+          <div class="guide-metadata-card compact">
+            <div class="guide-metadata-title">Label</div>
+            <div class="guide-metadata-value">Opening beat</div>
+            <div class="guide-metadata-note">Use a short name that scans fast.</div>
+          </div>
         </div>
       </div>
     </section>

@@ -719,6 +719,52 @@ h3 {
   line-height: 1.5;
 }
 
+.guide-metadata-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.guide-metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.guide-metadata-card {
+  min-width: 0;
+  padding: 22px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.guide-metadata-card.compact {
+  padding: 18px 20px;
+}
+
+.guide-metadata-title {
+  margin-bottom: 8px;
+  color: #6b7f95;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.guide-metadata-value {
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.guide-metadata-note {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .guide-badge {
   position: absolute;
   padding: 8px 10px;
@@ -1018,7 +1064,8 @@ h3 {
   .steps,
   .export-grid,
   .guide-flow,
-  .guide-shortcuts {
+  .guide-shortcuts,
+  .guide-metadata-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
@@ -1071,7 +1118,8 @@ h3 {
   .export-grid,
   .install-grid,
   .guide-flow,
-  .guide-shortcuts {
+  .guide-shortcuts,
+  .guide-metadata-grid {
     grid-template-columns: 1fr;
   }
 
