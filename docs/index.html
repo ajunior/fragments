@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Fragments is a desktop media player for building, previewing, and exporting scripted playlists from video and audio snippets.">
+  <title>Fragments - Scripted media playback</title>
+  <link rel="icon" href="assets/fragments.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="Fragments home">
+      <img src="assets/fragments.svg" alt="" width="36" height="36">
+      <span>Fragments</span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="guide.html">Documentation</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#features">Features</a>
+      <a href="#export">Export</a>
+      <a href="#install">Install</a>
+      <a class="download-link" href="#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Desktop media playback for video and audio fragments</p>
+        <h1>Build precise playlists from fragments of your media.</h1>
+        <p class="lead">
+          Fragments helps you trim source files, arrange fragments, preview playback, recover missing media,
+          and export the result as MP4 or GIF.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="#download">Download Fragments</a>
+          <a class="button secondary" href="guide.html">Documentation</a>
+          <a class="button secondary" href="https://codeberg.org/ajunior/fragments">View Source</a>
+        </div>
+        <p class="note">MP4/GIF export requires <a href="https://ffmpeg.org/download.html">FFmpeg</a> installed on your system. Your original media files are not modified.</p>
+      </div>
+
+      <div class="app-preview" aria-label="Fragments interface preview">
+        <div class="preview-topbar">
+          <span></span>
+          <strong>Fragments</strong>
+        </div>
+        <div class="preview-body">
+          <div class="cue-list">
+            <div class="cue active">
+              <b>01</b>
+              <span>Opening beat</span>
+              <code>00:01.250 - 00:08.500</code>
+            </div>
+            <div class="cue">
+              <b>02</b>
+              <span>Presenter fragment</span>
+              <code>00:12.000 - 00:18.400</code>
+            </div>
+            <div class="cue muted">
+              <b>03</b>
+              <span>Silent transition</span>
+              <code>00:21.100 - 00:25.000</code>
+            </div>
+          </div>
+          <div class="preview-panel">
+            <div class="video-frame">
+              <img src="assets/fragments.svg" alt="">
+            </div>
+            <div class="timeline">
+              <span class="range"></span>
+              <i class="handle left"></i>
+              <i class="handle right"></i>
+            </div>
+            <div class="time-row">
+              <span>00:01.250</span>
+              <span>00:08.500</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="workflow" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Workflow</p>
+        <h2>From source files to a playback sequence.</h2>
+      </div>
+      <div class="steps">
+        <article>
+          <span>1</span>
+          <h3>Add media</h3>
+          <p>Drop in local video or audio files and create fragments from the exact parts you need. The original files stay untouched.</p>
+        </article>
+        <article>
+          <span>2</span>
+          <h3>Trim visually</h3>
+          <p>Scrub the source and drag start/end handles to mark the fragment range with millisecond precision.</p>
+        </article>
+        <article>
+          <span>3</span>
+          <h3>Arrange playback</h3>
+          <p>Reorder fragments, add labels and notes, tune delay, volume, speed, and audio state per item.</p>
+        </article>
+        <article>
+          <span>4</span>
+          <h3>Preview or export</h3>
+          <p>Play the scripted sequence live, export a normalized MP4, or create a shareable GIF preview without modifying the source media.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="features" class="section split-section">
+      <div>
+        <p class="eyebrow">Features</p>
+        <h2>Built around fragments, not timelines.</h2>
+        <p>
+          Fragments is for preparing repeatable playback from many small snippets. It keeps every fragment
+          editable and readable, so you can make quick changes without opening a full video editor.
+          The original source files stay untouched.
+        </p>
+      </div>
+      <div class="feature-grid">
+        <article>
+          <h3>Fragment labels and notes</h3>
+          <p>Name fragments in human terms and keep context beside the timing data.</p>
+        </article>
+        <article>
+          <h3>Recent playlists</h3>
+          <p>Reopen recent JSON projects from the Project menu.</p>
+        </article>
+        <article>
+          <h3>Missing media recovery</h3>
+          <p>Relink one missing source or scan a folder to recover files by name.</p>
+        </article>
+        <article>
+          <h3>Draft preview</h3>
+          <p>Adjust a range, preview it immediately, and save only when the edit feels right.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="export" class="section export-section">
+      <div class="section-heading">
+        <p class="eyebrow">Export</p>
+        <h2>Render a playlist when live playback is not enough.</h2>
+      </div>
+      <div class="export-grid">
+        <article>
+          <h3>MP4 output</h3>
+          <p>Exports a combined H.264/AAC video. Mixed source resolutions and frame rates are normalized to 1280x720 at 30 fps.</p>
+        </article>
+        <article>
+          <h3>GIF preview</h3>
+          <p>Creates a looping animated GIF at 15 fps, scaled to 640 px wide, with palette generation for cleaner colors.</p>
+        </article>
+        <article>
+          <h3>Consistent timing</h3>
+          <p>Fragment delay becomes colored/silent space before playback starts. Audio-only fragments render over the chosen delay color.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="install" class="section install-section">
+      <div class="section-heading">
+        <p class="eyebrow">Install</p>
+        <h2>Pick your platform package, then add FFmpeg for export.</h2>
+      </div>
+      <div class="install-grid">
+        <article>
+          <h3>Windows</h3>
+          <p>Download the ZIP, extract it, and run <strong>fragments.exe</strong>. Keep the extracted files together.</p>
+        </article>
+        <article>
+          <h3>macOS</h3>
+          <p>Download the DMG, open it, and move Fragments to Applications. Public releases should be signed and notarized.</p>
+        </article>
+        <article>
+          <h3>Linux</h3>
+          <p>Download the TGZ, extract it, and run <strong>bin/fragments</strong>. The package includes desktop metadata and icon files.</p>
+        </article>
+      </div>
+      <div class="dependency-note">
+        <h3>Export dependency</h3>
+        <p>
+          Install <a href="https://ffmpeg.org/download.html">FFmpeg</a> and make sure both <strong>ffmpeg</strong> and
+          <strong>ffprobe</strong> are available on PATH. MP4 export needs H.264/AAC support; GIF export also needs FFmpeg palette filters.
+        </p>
+      </div>
+    </section>
+
+    <section id="download" class="download-panel">
+      <div>
+        <p class="eyebrow">Get Fragments</p>
+        <h2>Download the current release.</h2>
+        <p>Choose the build for your operating system. Export features require <a href="https://ffmpeg.org/download.html">FFmpeg</a>.</p>
+      </div>
+      <div class="download-actions" aria-label="Download options">
+        <a class="button primary" href="https://codeberg.org/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-windows-x86_64.zip">Windows</a>
+        <a class="button primary" href="https://codeberg.org/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-macos-universal.dmg">macOS</a>
+        <a class="button primary" href="https://codeberg.org/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-Linux-x86_64.tar.gz">Linux</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>
+      Made with <span class="heart" aria-label="love">&hearts;</span> and released as open source software (GPL-3.0+).
+    </span>
+    <span>Fragments. &copy; <span id="year">2026</span>, Adjamilton Junior.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

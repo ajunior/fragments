@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Visual documentation for Fragments: learn how to add media, trim fragments, preview playback, recover files, and export playlists.">
+  <title>Fragments - Documentation</title>
+  <link rel="icon" href="assets/fragments.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="guide-page">
+  <header class="site-header">
+    <a class="brand" href="index.html" aria-label="Fragments home">
+      <img src="assets/fragments.svg" alt="" width="36" height="36">
+      <span>Fragments</span>
+    </a>
+
+    <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+
+    <nav class="site-nav" aria-label="Primary navigation">
+      <a href="index.html">Home</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#editor">Editor</a>
+      <a href="#preview">Preview</a>
+      <a href="#playback">Play All</a>
+      <a href="#recovery">Recovery</a>
+      <a href="#shortcuts">Shortcuts</a>
+      <a class="download-link" href="index.html#download">Download</a>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero guide-hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Documentation</p>
+        <h1>Learn the app visually, from first playlist to final export.</h1>
+        <p class="lead">
+          Fragments is built around small media fragments, not a full timeline editor. This guide shows the
+          core workflow with the same layout and controls users see in the app.
+        </p>
+        <div class="hero-actions">
+          <a class="button primary" href="index.html#download">Download Fragments</a>
+          <a class="button secondary" href="index.html">Back to Home</a>
+        </div>
+        <p class="note">Your original media files are not modified. Export requires <a href="https://ffmpeg.org/download.html">FFmpeg</a>.</p>
+      </div>
+
+      <div class="guide-hero-visual" aria-label="Fragments workflow illustration">
+        <div class="guide-window">
+          <div class="guide-windowbar">
+            <span></span>
+            <strong>Fragments</strong>
+            <em>Playlist view</em>
+          </div>
+          <div class="guide-windowbody">
+            <aside class="guide-sidebar">
+              <div class="guide-sidebar-title">Playlist</div>
+              <div class="guide-row active"><b>01</b><span>Opening beat</span><em>00:01.250 - 00:08.500</em></div>
+              <div class="guide-row"><b>02</b><span>Presenter</span><em>00:12.000 - 00:18.400</em></div>
+              <div class="guide-row muted"><b>03</b><span>Silent gap</span><em>Delay before next cue</em></div>
+            </aside>
+            <section class="guide-canvas">
+              <div class="guide-preview-screen">
+                <img src="assets/fragments.svg" alt="">
+                <div class="guide-callout guide-callout-top">Scrub the media and set the range visually</div>
+              </div>
+              <div class="guide-timeline">
+                <span class="guide-range"></span>
+                <i class="guide-handle left"></i>
+                <i class="guide-handle right"></i>
+              </div>
+              <div class="guide-timeline-labels">
+                <span>Start</span>
+                <span>End</span>
+              </div>
+            </section>
+            <aside class="guide-inspector">
+              <div class="guide-sidebar-title">Fragment</div>
+              <div class="guide-pill">Label</div>
+              <div class="guide-pill">Notes</div>
+              <div class="guide-pill">Delay color</div>
+              <div class="guide-pill">Audio</div>
+              <div class="guide-mini-note">Preview updates before you save the draft.</div>
+            </aside>
+          </div>
+        </div>
+        <div class="guide-badge badge-one">1 Add media</div>
+        <div class="guide-badge badge-two">2 Trim range</div>
+        <div class="guide-badge badge-three">3 Reorder fragments</div>
+      </div>
+    </section>
+
+    <section id="workflow" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Workflow</p>
+        <h2>The short path from source file to playlist.</h2>
+      </div>
+      <div class="guide-flow">
+        <article>
+          <span>1</span>
+          <h3>Add media</h3>
+          <p>Open local video or audio files and create fragment rows from the source material.</p>
+        </article>
+        <article>
+          <span>2</span>
+          <h3>Trim and label</h3>
+          <p>Set start/end visually, then add labels and notes so the playlist stays readable later.</p>
+        </article>
+        <article>
+          <span>3</span>
+          <h3>Arrange playback</h3>
+          <p>Move fragments, add delay, decide whether audio stays on, and set the playback speed.</p>
+        </article>
+        <article>
+          <span>4</span>
+          <h3>Preview and export</h3>
+          <p>Check the draft in the preview, save it, then export MP4 or GIF when it is ready.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="editor" class="section split-section guide-split">
+      <div>
+        <p class="eyebrow">Editor</p>
+        <h2>Use the playlist table to keep fragments organized.</h2>
+        <p>
+          Each row is a fragment. The table is meant for quick scanning, not long-form editing.
+          Put the important details next to the timings so you can find the right cue fast.
+        </p>
+        <div class="guide-checklist">
+          <div><strong>#</strong><span>Use the row number to scan quickly.</span></div>
+          <div><strong>Label</strong><span>Give fragments a short human name.</span></div>
+          <div><strong>Delay</strong><span>Keep lead-in time attached to the fragment.</span></div>
+          <div><strong>Audio</strong><span>Mute or keep the sound for each cue.</span></div>
+        </div>
+      </div>
+      <div class="guide-table">
+        <div class="guide-table-head">
+          <span>#</span><span>Label</span><span>Range</span><span>Delay</span><span>Audio</span>
+        </div>
+        <div class="guide-table-row active">
+          <span>01</span><span>Opening beat</span><span>00:01.250 - 00:08.500</span><span>0.0 s</span><span>On</span>
+        </div>
+        <div class="guide-table-row">
+          <span>02</span><span>Presenter</span><span>00:12.000 - 00:18.400</span><span>1.5 s</span><span>On</span>
+        </div>
+        <div class="guide-table-row muted">
+          <span>03</span><span>Silent transition</span><span>00:21.100 - 00:25.000</span><span>0.8 s</span><span>Off</span>
+        </div>
+        <div class="guide-table-row">
+          <span>04</span><span>Closing title</span><span>00:30.000 - 00:38.500</span><span>0.0 s</span><span>On</span>
+        </div>
+        <div class="guide-table-foot">
+          <span class="guide-tag">Duplicate</span>
+          <span class="guide-tag">Move up/down</span>
+          <span class="guide-tag">Recover missing</span>
+        </div>
+      </div>
+    </section>
+
+    <section id="preview" class="section guide-preview-section">
+      <div class="section-heading">
+        <p class="eyebrow">Preview</p>
+        <h2>Scrub the media, then adjust the start and end handles.</h2>
+      </div>
+      <div class="guide-preview-grid">
+        <div class="guide-trim-panel">
+          <div class="guide-trim-screen">
+            <div class="guide-trim-video">
+              <img src="assets/fragments.svg" alt="">
+            </div>
+            <div class="guide-trim-track">
+              <span class="guide-delay-fill"></span>
+              <span class="guide-active-fill"></span>
+              <i class="guide-start-handle"></i>
+              <i class="guide-end-handle"></i>
+            </div>
+            <div class="guide-trim-labels">
+              <span>Delay</span>
+              <span>Start</span>
+              <span>End</span>
+            </div>
+          </div>
+        </div>
+        <div class="guide-copy-panel">
+          <article>
+            <h3>What the preview shows</h3>
+            <p>The highlighted section is the exact fragment you will keep. The handles mark where the cue begins and ends.</p>
+          </article>
+          <article>
+            <h3>Delay behavior</h3>
+            <p>Delay appears before the fragment in playback and export. The color helps you see the lead-in space instantly.</p>
+          </article>
+          <article>
+            <h3>Audio choices</h3>
+            <p>Keep audio for video fragments when needed, or use audio-only fragments for cue-style playlist sections.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="playback" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Play All</p>
+        <h2>Playback follows the playlist from top to bottom.</h2>
+      </div>
+      <div class="guide-playback-grid">
+        <div class="guide-playback-visual">
+          <div class="guide-playback-track">
+            <div class="guide-playback-node active">
+              <strong>1</strong>
+              <span>Current fragment</span>
+            </div>
+            <div class="guide-playback-line"></div>
+            <div class="guide-playback-node">
+              <strong>2</strong>
+              <span>Delay phase</span>
+            </div>
+            <div class="guide-playback-line"></div>
+            <div class="guide-playback-node">
+              <strong>3</strong>
+              <span>Next fragment</span>
+            </div>
+          </div>
+        </div>
+        <div class="guide-copy-panel">
+          <article>
+            <h3>What happens when you press Play All</h3>
+            <p>Fragments plays the playlist in row order, one fragment after another, so it feels like one independent video assembled from the fragments instead of separate standalone clips.</p>
+          </article>
+          <article>
+            <h3>Delay and transitions</h3>
+            <p>If a fragment has delay before it, the app shows that pause first, then starts the fragment range when the delay ends.</p>
+          </article>
+          <article>
+            <h3>Audio and preview differences</h3>
+            <p>Audio follows the fragment settings, including audio-only cues and muted fragments. Preview is for checking a draft; Play All is the sequence users experience in order.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="recovery" class="section split-section guide-split">
+      <div>
+        <p class="eyebrow">Recovery and export</p>
+        <h2>Handle missing files and finish with a clean render.</h2>
+        <p>
+          Fragments keeps the playlist editable even when files move. You can relink one source or scan a folder
+          for matches, then export the playlist once everything is resolved.
+        </p>
+      </div>
+      <div class="guide-recovery-stack">
+        <article>
+          <h3>Missing media recovery</h3>
+          <p>Batch relink missing sources with the recovery panel instead of fixing one file at a time.</p>
+        </article>
+        <article>
+          <h3>Export target</h3>
+          <p>Render the playlist to MP4 or GIF. The app normalizes mixed source sizes and frame rates before export.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="shortcuts" class="section">
+      <div class="section-heading">
+        <p class="eyebrow">Shortcuts</p>
+        <h2>Keep the common actions on the keyboard.</h2>
+      </div>
+      <div class="guide-shortcuts">
+        <div><kbd>Ctrl+O</kbd><span>Open playlist</span></div>
+        <div><kbd>Ctrl+S</kbd><span>Save playlist</span></div>
+        <div><kbd>Ctrl+Shift+S</kbd><span>Save as</span></div>
+        <div><kbd>Ctrl+Z</kbd><span>Undo</span></div>
+        <div><kbd>Ctrl+Y</kbd><span>Redo</span></div>
+        <div><kbd>P</kbd><span>Preview selected fragment</span></div>
+        <div><kbd>Delete</kbd><span>Remove selected fragment</span></div>
+        <div><kbd>Ctrl+D</kbd><span>Duplicate selected fragment</span></div>
+        <div><kbd>Ctrl+Up / Ctrl+Down</kbd><span>Move selected fragment</span></div>
+        <div><kbd>I</kbd><span>Set draft start from playhead</span></div>
+        <div><kbd>O</kbd><span>Set draft end from playhead</span></div>
+        <div><kbd>Ctrl+Enter</kbd><span>Save selected fragment draft</span></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <span>
+      Made with <span class="heart" aria-label="love">&hearts;</span> and released as open source software (GPL-3.0+).
+    </span>
+    <span>Fragments. &copy; <span id="year">2026</span>, Adjamilton Junior.</span>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

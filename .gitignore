@@ -1,0 +1,10 @@
+build/
+build-*/
+_CPack_Packages/
+__cmake_systeminformation/
+*.user
+*.autosave
+compile_commands.json
+fragments-*.tar.gz
+fragments-*.zip
+fragments-*.dmg
