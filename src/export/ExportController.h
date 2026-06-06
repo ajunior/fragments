@@ -37,7 +37,7 @@ public:
     void setPlaylist(PlaylistModel *playlist);
 
     Q_INVOKABLE bool exportTo(const QUrl &outputUrl, int gifFps = 15, int row = -1);
-    Q_INVOKABLE bool exportGifTo(const QUrl &outputUrl, int gifFps = 15, int row = -1);
+    Q_INVOKABLE bool exportGifTo(const QUrl &outputUrl, int gifFps = 15, int quality = 1, int row = -1);
     Q_INVOKABLE void cancel();
 
 signals:
@@ -69,7 +69,7 @@ private:
         Gif
     };
 
-    bool startExport(const QUrl &outputUrl, ExportFormat format, int gifFps, int row);
+    bool startExport(const QUrl &outputUrl, ExportFormat format, int gifFps, int gifQuality, int row);
     void startNextSegment();
     void startConcat();
     void startGifPalette();
@@ -118,6 +118,7 @@ private:
     bool m_renderingGif = false;
     ExportFormat m_format = ExportFormat::Mp4;
     int m_gifFps = 15;
+    int m_gifQuality = 1;
     double m_progress = 0.0;
     QString m_status;
     mutable bool m_exportReadinessChecked = false;

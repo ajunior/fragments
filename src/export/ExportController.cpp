@@ -118,15 +118,15 @@ void ExportController::setPlaylist(PlaylistModel *playlist)
 
 bool ExportController::exportTo(const QUrl &outputUrl, int gifFps, int row)
 {
-    return startExport(outputUrl, ExportFormat::Mp4, gifFps, row);
+    return startExport(outputUrl, ExportFormat::Mp4, gifFps, 1, row);
 }
 
-bool ExportController::exportGifTo(const QUrl &outputUrl, int gifFps, int row)
+bool ExportController::exportGifTo(const QUrl &outputUrl, int gifFps, int quality, int row)
 {
-    return startExport(outputUrl, ExportFormat::Gif, gifFps, row);
+    return startExport(outputUrl, ExportFormat::Gif, gifFps, quality, row);
 }
 
-bool ExportController::startExport(const QUrl &outputUrl, ExportFormat format, int gifFps, int row)
+bool ExportController::startExport(const QUrl &outputUrl, ExportFormat format, int gifFps, int gifQuality, int row)
 {
     if (m_running) {
         return false;
@@ -223,6 +223,7 @@ bool ExportController::startExport(const QUrl &outputUrl, ExportFormat format, i
     m_outputUrl = outputUrl;
     m_format = format;
     m_gifFps = qBound(1, gifFps, 60);
+    m_gifQuality = qBound(0, gifQuality, 2);
     m_currentItem = 0;
     m_concatenating = false;
     m_generatingGifPalette = false;
@@ -460,6 +461,13 @@ QStringList ExportController::concatArguments() const
 
 QStringList ExportController::gifPaletteArguments() const
 {
+    QString vf;
+    if (m_gifQuality == 0)
+        vf = QStringLiteral("fps=%1,scale=320:-1:flags=lanczos,palettegen=stats_mode=diff").arg(m_gifFps);
+    else if (m_gifQuality == 2)
+        vf = QStringLiteral("fps=%1,palettegen=stats_mode=full").arg(m_gifFps);
+    else
+        vf = QStringLiteral("fps=%1,scale=640:-1:flags=lanczos,palettegen=stats_mode=diff").arg(m_gifFps);
     return {
         QStringLiteral("-y"),
         QStringLiteral("-hide_banner"),
@@ -468,13 +476,20 @@ QStringList ExportController::gifPaletteArguments() const
         QStringLiteral("-i"),
         m_intermediateVideoPath,
         QStringLiteral("-vf"),
-        QStringLiteral("fps=%1,scale=640:-1:flags=lanczos,palettegen=stats_mode=diff").arg(m_gifFps),
+        vf,
         m_gifPalettePath
     };
 }
 
 QStringList ExportController::gifRenderArguments() const
 {
+    QString lavfi;
+    if (m_gifQuality == 0)
+        lavfi = QStringLiteral("fps=%1,scale=320:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5").arg(m_gifFps);
+    else if (m_gifQuality == 2)
+        lavfi = QStringLiteral("fps=%1[x];[x][1:v]paletteuse=dither=sierra2_4a").arg(m_gifFps);
+    else
+        lavfi = QStringLiteral("fps=%1,scale=640:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5").arg(m_gifFps);
     return {
         QStringLiteral("-y"),
         QStringLiteral("-hide_banner"),
@@ -485,7 +500,7 @@ QStringList ExportController::gifRenderArguments() const
         QStringLiteral("-i"),
         m_gifPalettePath,
         QStringLiteral("-lavfi"),
-        QStringLiteral("fps=%1,scale=640:-1:flags=lanczos[x];[x][1:v]paletteuse=dither=bayer:bayer_scale=5").arg(m_gifFps),
+        lavfi,
         QStringLiteral("-loop"),
         QStringLiteral("0"),
         m_outputPath

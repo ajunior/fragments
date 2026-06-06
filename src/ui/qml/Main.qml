@@ -107,6 +107,7 @@ ApplicationWindow {
     property int exportFormatIndex: 0
     property int exportScopeIndex: 0
     property int exportGifFps: 15
+    property int exportGifQuality: 1
     property string exportOutputUrl: ""
     property bool pendingExportSettingsOpen: false
     property string toastMessage: ""
@@ -304,7 +305,7 @@ ApplicationWindow {
         }
 
         const ok = exportIsGif()
-            ? exporter.exportGifTo(exportOutputUrl, exportGifFps, exportRow)
+            ? exporter.exportGifTo(exportOutputUrl, exportGifFps, exportGifQuality, exportRow)
             : exporter.exportTo(exportOutputUrl, exportGifFps, exportRow)
 
         if (ok)
@@ -471,15 +472,17 @@ ApplicationWindow {
 
         Window {
             title: exportScopeIndex === 1 ? "Export Fragment" : "Export Playlist"
+            readonly property int dialogHeight: exportFormatIndex === 1 ? 362 : 270
             width: 540
-            height: 320
+            height: dialogHeight
             minimumWidth: 540
-            minimumHeight: 320
+            minimumHeight: dialogHeight
             maximumWidth: 540
-            maximumHeight: 320
+            maximumHeight: dialogHeight
             x: Math.round((root.width - width) / 2)
             y: Math.round((root.height - height) / 2)
             transientParent: root
+            modality: Qt.WindowModal
             color: theme.appBg
 
             onVisibleChanged: {
@@ -516,29 +519,37 @@ ApplicationWindow {
                             anchors.margins: 12
                             spacing: 10
 
-                        RowLayout {
+                        Rectangle {
                             Layout.fillWidth: true
-                            spacing: 10
+                            height: 36
+                            radius: 6
+                            color: exportScopeIndex === 1
+                                ? (currentThemeName === "Dark" ? "#1e2045" : "#ebe9ff")
+                                : (currentThemeName === "Dark" ? "#1a2a1a" : "#e8f5e9")
+                            border.color: exportScopeIndex === 1 ? theme.primary : theme.success
 
                             Label {
-                                text: "Scope"
-                                color: theme.bodyText
-                                Layout.preferredWidth: 92
-                            }
-
-                            AppButton {
-                                text: "Playlist"
-                                primary: exportScopeIndex === 0
-                                Layout.fillWidth: true
-                                onClicked: exportScopeIndex = 0
-                            }
-
-                            AppButton {
-                                text: "Fragment"
-                                primary: exportScopeIndex === 1
-                                enabled: selectedIndex >= 0
-                                Layout.fillWidth: true
-                                onClicked: exportScopeIndex = 1
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.leftMargin: 10
+                                anchors.rightMargin: 10
+                                elide: Text.ElideRight
+                                color: exportScopeIndex === 1 ? theme.primary : theme.success
+                                font.pixelSize: 13
+                                text: {
+                                    if (exportScopeIndex === 1 && selectedIndex >= 0) {
+                                        const label = selectedFragment.label || ""
+                                        const dur = (selectedFragment.end || 0) - (selectedFragment.start || 0)
+                                        const title = label.length > 0
+                                            ? "Fragment " + (selectedIndex + 1) + " – " + label
+                                            : "Fragment " + (selectedIndex + 1)
+                                        return title + "  ·  Duration: " + formatTime(dur)
+                                    } else {
+                                        return playlistModel.count + (playlistModel.count === 1 ? " fragment" : " fragments")
+                                            + "  ·  Total: " + formatTime(playlistModel.totalDuration)
+                                    }
+                                }
                             }
                         }
 
@@ -611,7 +622,7 @@ ApplicationWindow {
                             }
 
                             SpinBox {
-                                from: 1
+                                from: 15
                                 to: 60
                                 value: exportGifFps
                                 editable: true
@@ -622,16 +633,45 @@ ApplicationWindow {
                             Label {
                                 text: "Higher FPS makes the GIF smoother but heavier."
                                 color: theme.mutedText
+                                font.pixelSize: 11
                                 wrapMode: Text.WordWrap
                                 Layout.fillWidth: true
                             }
                         }
 
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 10
+                            visible: exportIsGif()
+
+                            Label {
+                                text: "Quality"
+                                color: theme.bodyText
+                                Layout.preferredWidth: 92
+                            }
+
+                            ComboBox {
+                                model: ["Low", "Medium", "High"]
+                                currentIndex: exportGifQuality
+                                Layout.preferredWidth: 160
+                                onCurrentIndexChanged: exportGifQuality = currentIndex
+                            }
+
+                            Item { Layout.fillWidth: true }
+                        }
+
                         Label {
-                            text: exportIsGif()
-                                ? "GIF export is silent and uses the selected frame rate."
-                                : "MP4 export keeps audio when the fragments have it."
+                            text: {
+                                if (!exportIsGif())
+                                    return "MP4 export keeps audio when the fragments have it."
+                                if (exportGifQuality === 0)
+                                    return "Scaled to 320px. Smallest file, lower detail."
+                                if (exportGifQuality === 2)
+                                    return "Full resolution, optimal palette. Larger file size."
+                                return "Scaled to 640px. Balanced size and quality."
+                            }
                             color: theme.mutedText
+                            font.pixelSize: 11
                             wrapMode: Text.WordWrap
                             Layout.fillWidth: true
                         }
@@ -652,7 +692,7 @@ ApplicationWindow {
                             primary: true
                             enabled: !exporter.running
                                      && playlistModel.valid
-                                     && (exportScopeIndex === 0 ? playlistModel.count > 0 : selectedIndex >= 0)
+                                     && (exportScopeIndex === 1 ? selectedIndex >= 0 : playlistModel.count > 0)
                                      && (!exportIsGif() ? exporter.mp4ExportAvailable : exporter.gifExportAvailable)
                             toolTip: exportIsGif() ? exporter.gifExportReadinessMessage : exporter.mp4ExportReadinessMessage
                             onClicked: startExportFromDialog()
@@ -1716,7 +1756,7 @@ ApplicationWindow {
                 toolTip: exporter.ffmpegAvailable ? "Open export settings" : exporter.exportReadinessMessage
                 onTriggered: {
                     closeProjectMenu()
-                    openExportSettingsDialog()
+                    openExportSettingsDialog(0)
                 }
             }
             ProjectMenuItem {
