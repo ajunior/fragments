@@ -1,0 +1,118 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ajunior.github.io/fragments/playlist.schema.json",
+  "title": "Fragments Playlist",
+  "description": "JSON format used by Fragments to save scripted media playlists.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "name",
+    "repeat",
+    "createdAt",
+    "updatedAt",
+    "items"
+  ],
+  "properties": {
+    "version": {
+      "description": "Playlist file format version.",
+      "type": "integer",
+      "const": 1
+    },
+    "name": {
+      "description": "Playlist name. It must start with a letter or underscore and can contain letters, numbers, underscores, and hyphens.",
+      "type": "string",
+      "pattern": "^[A-Za-z_][A-Za-z0-9_-]*$"
+    },
+    "repeat": {
+      "description": "Whether Play All loops after the final fragment.",
+      "type": "boolean"
+    },
+    "createdAt": {
+      "description": "UTC timestamp written when the playlist is first saved.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "description": "UTC timestamp written when the playlist is saved.",
+      "type": "string",
+      "format": "date-time"
+    },
+    "items": {
+      "description": "Fragments played in row order.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fragment"
+      }
+    }
+  },
+  "$defs": {
+    "fragment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "start",
+        "end",
+        "delayBefore",
+        "audio",
+        "volume",
+        "speed",
+        "label",
+        "notes",
+        "delayColor"
+      ],
+      "properties": {
+        "file": {
+          "description": "Source media URL. Fragments currently writes local files as file:// URLs.",
+          "type": "string",
+          "format": "uri"
+        },
+        "start": {
+          "description": "Fragment start time in seconds.",
+          "type": "number",
+          "minimum": 0
+        },
+        "end": {
+          "description": "Fragment end time in seconds.",
+          "type": "number",
+          "minimum": 0
+        },
+        "delayBefore": {
+          "description": "Delay before this fragment starts, in seconds.",
+          "type": "number",
+          "minimum": 0
+        },
+        "audio": {
+          "description": "Whether this fragment keeps source audio.",
+          "type": "boolean"
+        },
+        "volume": {
+          "description": "Playback/export volume multiplier.",
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "speed": {
+          "description": "Playback/export speed multiplier.",
+          "type": "number",
+          "minimum": 0.1,
+          "maximum": 4
+        },
+        "label": {
+          "description": "Short optional label shown in the fragment table.",
+          "type": "string"
+        },
+        "notes": {
+          "description": "Optional notes attached to the fragment.",
+          "type": "string"
+        },
+        "delayColor": {
+          "description": "Background color used while this fragment's delay is shown.",
+          "type": "string",
+          "pattern": "^#[0-9a-f]{6}$"
+        }
+      }
+    }
+  }
+}
