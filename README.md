@@ -89,11 +89,24 @@ cmake --build build-desktop
 
 See [PACKAGING.md](PACKAGING.md) for platform-specific release steps.
 
+### Flatpak (Linux)
+
+The recommended Linux distribution method. Installs Qt, GStreamer, and ffmpeg automatically:
+
+```bash
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+flatpak-builder --user --install --force-clean build-flatpak \
+    packaging/io.github.ajunior.fragments.yml
+flatpak run io.github.ajunior.fragments
+```
+
+### Other platforms
+
 Expected release downloads:
 
 - Windows: `fragments-0.44.6-windows-x86_64.zip`
 - macOS: `fragments-0.44.6-macos-universal.dmg`
-- Linux: `fragments-0.44.6-Linux-x86_64.tar.gz`
+- Linux (plain archive): `fragments-0.44.6-Linux-x86_64.tar.gz`
 
 Build and run the test suite before packaging:
 
@@ -111,21 +124,56 @@ cpack --config build-desktop/CPackConfig.cmake
 The generated CPack tarball contains the Fragments binary plus desktop, metainfo, and icon
 files. It expects compatible Qt runtime libraries on the target system.
 
-## Install Notes
+## Dependencies
 
-Fragments export features require [FFmpeg](https://ffmpeg.org/download.html) to be available on `PATH`.
-FFmpeg normally includes `ffprobe`, which Fragments uses to inspect media before export.
+### Runtime
 
-Recommended checks:
+Fragments requires Qt 6.5 or newer at runtime (Core, Gui, Qml, Quick, QuickControls2, Multimedia).
+All fonts and icons are bundled inside the binary.
 
+Video and audio playback depends on a platform multimedia backend:
+
+- **Linux** — GStreamer. Install the base plugins plus codec support:
+
+  Fedora / RPM-based:
+  ```bash
+  sudo dnf install gstreamer1-plugins-good gstreamer1-plugins-bad-free gstreamer1-libav
+  ```
+  Ubuntu / Debian-based:
+  ```bash
+  sudo apt install gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
+  ```
+  Without these, media files will not play.
+
+- **Windows** — Windows Media Foundation is built in. No extra install needed.
+- **macOS** — AVFoundation is built in. No extra install needed.
+
+### Export (optional)
+
+Export to MP4 or GIF requires [FFmpeg](https://ffmpeg.org/download.html). The Linux Flatpak includes FFmpeg support automatically; other builds need `ffmpeg` and `ffprobe` on `PATH`.
+
+  Fedora / RPM-based (requires [RPM Fusion](https://rpmfusion.org)):
+  ```bash
+  sudo dnf install ffmpeg
+  ```
+  Ubuntu / Debian-based:
+  ```bash
+  sudo apt install ffmpeg
+  ```
+
+Verify the install:
 ```bash
 ffmpeg -version
 ffprobe -version
 ```
 
-MP4 export requires a FFmpeg build with the `libx264` H.264 encoder, AAC encoder, and standard
-scale/pad/fps/format/tpad/atempo/adelay/aformat filters. GIF export additionally requires
-FFmpeg's palettegen and paletteuse filters.
+**MP4 export** requires a FFmpeg build with the `libx264` H.264 encoder, AAC encoder, and the
+`scale`, `pad`, `fps`, `format`, `setsar`, `tpad`, `atempo`, `adelay`, and `aformat` filters.
+
+**GIF export** requires the same as MP4, plus the `palettegen` and `paletteuse` filters.
+
+The app checks for all of this at startup and shows a specific message in the Export dialog if
+something is missing.
 
 ## License
 

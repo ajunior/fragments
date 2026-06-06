@@ -45,7 +45,7 @@
           <a class="button secondary" href="guide.html">Documentation</a>
           <a class="button secondary" href="https://github.com/ajunior/fragments">View Source</a>
         </div>
-        <p class="note">MP4/GIF export requires <a href="https://ffmpeg.org/download.html">FFmpeg</a> installed on your system. Your original media files are not modified.</p>
+        <p class="note">MP4/GIF export uses FFmpeg. The Linux Flatpak includes it; Windows and macOS users should install <a href="https://ffmpeg.org/download.html">FFmpeg</a>. Your original media files are not modified.</p>
       </div>
 
       <div class="app-preview" aria-label="Fragments interface preview">
@@ -176,7 +176,7 @@
     <section id="install" class="section install-section">
       <div class="section-heading">
         <p class="eyebrow">Install</p>
-        <h2>Pick your platform package, then add FFmpeg for export.</h2>
+        <h2>Pick your platform package.</h2>
       </div>
       <div class="install-grid">
         <article>
@@ -189,14 +189,14 @@
         </article>
         <article>
           <h3>Linux</h3>
-          <p>Download the TGZ, extract it, and run <strong>bin/fragments</strong>. The package includes desktop metadata and icon files.</p>
+          <p>Install Fragments with Flatpak. The Flatpak package includes the runtime pieces needed by the app and the FFmpeg extension used for export.</p>
         </article>
       </div>
       <div class="dependency-note">
         <h3>Export dependency</h3>
         <p>
-          Install <a href="https://ffmpeg.org/download.html">FFmpeg</a> and make sure both <strong>ffmpeg</strong> and
-          <strong>ffprobe</strong> are available on PATH. MP4 export needs H.264/AAC support; GIF export also needs FFmpeg palette filters.
+          Windows and macOS package users should install <a href="https://ffmpeg.org/download.html">FFmpeg</a> and make sure both
+          <strong>ffmpeg</strong> and <strong>ffprobe</strong> are available on PATH. The Linux Flatpak includes FFmpeg support for export.
         </p>
       </div>
     </section>
@@ -205,12 +205,12 @@
       <div>
         <p class="eyebrow">Get Fragments</p>
         <h2>Download the current release.</h2>
-        <p>Choose the build for your operating system. Export features require <a href="https://ffmpeg.org/download.html">FFmpeg</a>.</p>
+        <p>Choose the build for your operating system. Linux installation is distributed through Flatpak.</p>
       </div>
       <div class="download-actions" aria-label="Download options">
         <a class="button primary" href="https://github.com/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-windows-x86_64.zip">Windows</a>
         <a class="button primary" href="https://github.com/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-macos-universal.dmg">macOS</a>
-        <a class="button primary" href="https://github.com/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-Linux-x86_64.tar.gz">Linux</a>
+        <a class="button primary" href="https://flathub.org/apps/io.github.ajunior.fragments">Linux Flatpak</a>
       </div>
     </section>
   </main>
