@@ -1116,7 +1116,7 @@ bool PlaylistModel::sourceExists(const Fragment &fragment)
 QString PlaylistModel::sourceStatus(const Fragment &fragment)
 {
     if (fragment.source.isLocalFile()) {
-        return sourceExists(fragment) ? QStringLiteral("Available") : QStringLiteral("Missing");
+        return sourceExists(fragment) ? QStringLiteral("Online") : QStringLiteral("Offline");
     }
 
     return QStringLiteral("Unknown remote source");

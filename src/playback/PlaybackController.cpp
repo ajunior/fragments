@@ -7,6 +7,8 @@
 #include <QDateTime>
 #include <QRegularExpression>
 
+#include <utility>
+
 namespace {
 QString normalizedColor(const QString &value)
 {
@@ -130,7 +132,7 @@ void PlaybackController::cue(int index)
         return;
     }
 
-    m_stopAfterCurrent = false;
+    m_stopAfterCurrent = true;
     clearPreviewOverride();
     m_delayTimer.stop();
     m_endTimer.stop();
@@ -150,6 +152,20 @@ void PlaybackController::cue(int index)
     m_backend->setPosition(static_cast<qint64>(fragment->start * 1000.0));
 }
 
+bool PlaybackController::playingSource() const
+{
+    return m_playingSource;
+}
+
+void PlaybackController::setPlayingSource(bool playingSource)
+{
+    if (m_playingSource == playingSource) {
+        return;
+    }
+    m_playingSource = playingSource;
+    emit playingSourceChanged();
+}
+
 void PlaybackController::play(int index)
 {
     if (!m_playlist || m_playlist->rowCount() == 0) {
@@ -157,6 +173,7 @@ void PlaybackController::play(int index)
     }
 
     m_stopAfterCurrent = false;
+    setPlayingSource(false);
     clearPreviewOverride();
 
     if (index >= m_playlist->rowCount()) {
@@ -179,6 +196,7 @@ void PlaybackController::preview(int index)
     }
 
     m_stopAfterCurrent = true;
+    setPlayingSource(false);
     clearPreviewOverride();
     setCurrentIndex(index);
     startCurrentAfterDelay();
@@ -191,6 +209,7 @@ void PlaybackController::previewRange(int index, double start, double end, doubl
     }
 
     m_stopAfterCurrent = true;
+    setPlayingSource(false);
     m_hasPreviewOverride = true;
     m_previewStart = qMax(0.0, start);
     m_previewEnd = qMax(m_previewStart, end);
@@ -202,6 +221,20 @@ void PlaybackController::previewRange(int index, double start, double end, doubl
     setCurrentIndex(index);
     emit currentFragmentChanged();
     startCurrentAfterDelay();
+}
+
+void PlaybackController::playSource(int index, qint64 positionMs)
+{
+    if (!m_playlist || m_playlist->rowCount() == 0 || index < 0 || index >= m_playlist->rowCount()) {
+        return;
+    }
+
+    m_stopAfterCurrent = true;
+    clearPreviewOverride();
+    setPlayingSource(true);
+    m_startPositionOverrideMs = positionMs;
+    setCurrentIndex(index);
+    startCurrentNow();
 }
 
 void PlaybackController::pause()
@@ -225,12 +258,15 @@ void PlaybackController::resume()
     }
 
     m_backend->play();
-    m_endTimer.start();
+    if (!m_playingSource) {
+        m_endTimer.start();
+    }
 }
 
 void PlaybackController::stop()
 {
     m_stopAfterCurrent = false;
+    setPlayingSource(false);
     clearPreviewOverride();
     m_delayTimer.stop();
     m_delayProgressTimer.stop();
@@ -342,9 +378,14 @@ void PlaybackController::startCurrentNow()
     m_backend->setVolume(effectiveVolume(*fragment));
     m_backend->setPlaybackRate(effectiveSpeed(*fragment));
     m_backend->setSource(fragment->source);
-    m_backend->setPosition(static_cast<qint64>(effectiveStart(*fragment) * 1000.0));
+    const qint64 startPos = m_startPositionOverrideMs >= 0
+        ? std::exchange(m_startPositionOverrideMs, -1)
+        : static_cast<qint64>(effectiveStart(*fragment) * 1000.0);
+    m_backend->setPosition(startPos);
     m_backend->play();
-    m_endTimer.start();
+    if (!m_playingSource) {
+        m_endTimer.start();
+    }
 }
 
 void PlaybackController::setCurrentIndex(int index)

@@ -19,6 +19,7 @@ class PlaybackController : public QObject
     Q_PROPERTY(double currentStart READ currentStart NOTIFY currentFragmentChanged)
     Q_PROPERTY(double currentEnd READ currentEnd NOTIFY currentFragmentChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
+    Q_PROPERTY(bool playingSource READ playingSource NOTIFY playingSourceChanged)
     Q_PROPERTY(bool delayActive READ delayActive NOTIFY delayStateChanged)
     Q_PROPERTY(QString currentDelayColor READ currentDelayColor NOTIFY currentFragmentChanged)
     Q_PROPERTY(int delayRemainingMs READ delayRemainingMs NOTIFY delayProgressChanged)
@@ -33,6 +34,7 @@ public:
     double currentStart() const;
     double currentEnd() const;
     bool playing() const;
+    bool playingSource() const;
     bool delayActive() const;
     QString currentDelayColor() const;
     int delayRemainingMs() const;
@@ -44,6 +46,7 @@ public:
     Q_INVOKABLE void play(int index = -1);
     Q_INVOKABLE void preview(int index);
     Q_INVOKABLE void previewRange(int index, double start, double end, double delayBefore, const QString &delayColor, bool audioEnabled, double volume, double speed);
+    Q_INVOKABLE void playSource(int index, qint64 positionMs);
     Q_INVOKABLE void pause();
     Q_INVOKABLE void resume();
     Q_INVOKABLE void stop();
@@ -55,6 +58,7 @@ signals:
     void currentIndexChanged();
     void currentFragmentChanged();
     void playingChanged();
+    void playingSourceChanged();
     void delayStateChanged();
     void delayProgressChanged();
     void playbackError(const QString &message);
@@ -64,6 +68,7 @@ private:
     void startCurrentNow();
     void setCurrentIndex(int index);
     void setPlaying(bool playing);
+    void setPlayingSource(bool playingSource);
     void clearPreviewOverride();
     double effectiveStart(const Fragment &fragment) const;
     double effectiveEnd(const Fragment &fragment) const;
@@ -80,8 +85,10 @@ private:
     QTimer m_delayProgressTimer;
     int m_currentIndex = -1;
     bool m_playing = false;
+    bool m_playingSource = false;
     bool m_stopAfterCurrent = false;
     bool m_hasPreviewOverride = false;
+    qint64 m_startPositionOverrideMs = -1;
     double m_previewStart = 0.0;
     double m_previewEnd = 0.0;
     double m_previewDelayBefore = 0.0;

@@ -89,6 +89,7 @@ ApplicationWindow {
     property bool draftDirty: false
     property bool draftValid: draftValidationMessage.length === 0
     property string draftValidationMessage: validateDraft()
+    property int previewTab: 0
     property string pendingAction: ""
     property url pendingRecentPlaylistUrl: ""
     property bool continueAfterSave: false
@@ -96,6 +97,7 @@ ApplicationWindow {
     property var recentPlaylistUrls: appSettings.recentPlaylistUrls || []
     readonly property bool showFragmentLabelColumn: width >= minimumWidth + 160
     readonly property bool showDelayColorCode: width >= minimumWidth + 120
+    readonly property bool showSourceTabButtonLabels: width >= minimumWidth + 220
     readonly property int trimTimelineDurationMs: Math.max(sourceDurationMs, draftEndMs, 1)
     readonly property string appVersion: "0.44.6"
     readonly property string appDescription: "A desktop app for building, previewing, and exporting scripted playlists from video and audio fragments."
@@ -376,10 +378,10 @@ ApplicationWindow {
             if (!draftValid)
                 return { text: draftValidationMessage, error: true }
 
-            if (selectedFragment.sourceStatus === "Missing")
+            if (selectedFragment.sourceStatus === "Offline")
                 return { text: "Source missing: " + (selectedFragment.fileName || "Unknown source"), error: true }
 
-            if (selectedFragment.sourceStatus && selectedFragment.sourceStatus !== "Available")
+            if (selectedFragment.sourceStatus && selectedFragment.sourceStatus !== "Online")
                 return { text: selectedFragment.sourceStatus, error: false }
         }
 
@@ -1283,14 +1285,14 @@ ApplicationWindow {
 
                     AppSlider {
                         Layout.preferredWidth: 260
-                        from: playback.currentStart * 1000
-                        to: Math.max(from + 1, playback.currentEnd * 1000)
+                        from: playback.playingSource ? 0 : playback.currentStart * 1000
+                        to: Math.max(from + 1, playback.playingSource ? playback.player.duration : playback.currentEnd * 1000)
                         value: Math.max(from, Math.min(to, playback.player.position))
                         onMoved: playback.player.position = value
                     }
 
                     Label {
-                        text: formatTime(playback.currentEnd)
+                        text: playback.playingSource ? formatTime(playback.player.duration / 1000) : formatTime(playback.currentEnd)
                         color: "#ffffff"
                         font.family: "monospace"
                         Layout.preferredWidth: 78
@@ -1407,22 +1409,26 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignVCenter
                     onClicked: openProjectMenu()
                 }
-                Item { Layout.fillWidth: true }
+
+                Rectangle {
+                    width: 1; height: 20
+                    color: theme.borderSoft
+                    visible: playlistModel.hasPlaylist
+                    Layout.alignment: Qt.AlignVCenter
+                }
+
                 Item {
                     visible: playlistModel.hasPlaylist
-                    Layout.alignment: Qt.AlignHCenter | Qt.AlignVCenter
+                    implicitWidth: row.implicitWidth
+                    implicitHeight: row.implicitHeight
+                    Layout.alignment: Qt.AlignVCenter
 
                     RowLayout {
-                        spacing: 8
-                        anchors.centerIn: parent
+                        id: row
+                        spacing: 10
+                        anchors.verticalCenter: parent.verticalCenter
 
-                        Label {
-                            text: "Playlist"
-                            color: theme.bodyText
-                            font.pixelSize: 13
-                            font.bold: true
-                            Layout.alignment: Qt.AlignVCenter
-                        }
+                        // Playlist name — inline editable title
                         TextField {
                             id: playlistNameField
                             text: playlistModel.name
@@ -1430,10 +1436,11 @@ ApplicationWindow {
                             color: theme.text
                             selectedTextColor: "#ffffff"
                             selectionColor: theme.primary
-                            font.pixelSize: 13
+                            font.pixelSize: 14
+                            font.bold: true
                             verticalAlignment: TextInput.AlignVCenter
                             implicitHeight: 34
-                            Layout.preferredWidth: 190
+                            Layout.preferredWidth: 200
                             Layout.alignment: Qt.AlignVCenter
                             validator: RegularExpressionValidator {
                                 regularExpression: /[A-Za-z_][A-Za-z0-9_-]*/
@@ -1454,50 +1461,62 @@ ApplicationWindow {
                             }
 
                             background: Rectangle {
-                                radius: 10
-                                color: playlistNameField.activeFocus ? theme.blockAlt : theme.block
-                                border.color: playlistNameField.activeFocus && !playlistNameField.acceptableInput ? theme.danger : (playlistNameField.activeFocus ? theme.primary : theme.border)
+                                radius: 8
+                                color: playlistNameField.activeFocus ? theme.blockAlt : "transparent"
+                                border.color: playlistNameField.activeFocus && !playlistNameField.acceptableInput
+                                    ? theme.danger
+                                    : (playlistNameField.activeFocus ? theme.primary : "transparent")
                             }
                         }
+
+                        // Divider
+                        Rectangle {
+                            width: 1; height: 18
+                            color: theme.borderSoft
+                            Layout.alignment: Qt.AlignVCenter
+                        }
+
+                        // Repeat
                         Label {
                             text: "Repeat"
-                            color: theme.bodyText
-                            font.pixelSize: 13
-                            font.bold: true
+                            color: theme.mutedText
+                            font.pixelSize: 11
                             Layout.alignment: Qt.AlignVCenter
                         }
                         AppSwitch {
+                            text: ""
+                            spacing: 0
                             checked: playlistModel.repeat
                             Layout.alignment: Qt.AlignVCenter
                             onToggled: playlistModel.repeat = checked
                         }
-                        Item { Layout.preferredWidth: 18 }
-                        Label {
-                            text: "Created:"
-                            color: theme.bodyText
-                            font.pixelSize: 13
-                            font.bold: true
+
+                        // Divider
+                        Rectangle {
+                            width: 1; height: 18
+                            color: theme.borderSoft
                             Layout.alignment: Qt.AlignVCenter
                         }
+
+                        // Dates
                         Label {
-                            text: formatDateTime(playlistModel.createdAt)
-                            color: theme.bodyText
-                            font.pixelSize: 13
+                            text: "Created " + formatDateTime(playlistModel.createdAt)
+                            color: theme.mutedText
+                            font.pixelSize: 11
                             elide: Text.ElideRight
                             Layout.alignment: Qt.AlignVCenter
                         }
-                        Item { Layout.preferredWidth: 5 }
-                        Label {
-                            text: "Modified:"
-                            color: theme.bodyText
-                            font.pixelSize: 13
-                            font.bold: true
+
+                        Rectangle {
+                            width: 3; height: 3; radius: 1.5
+                            color: theme.mutedText; opacity: 0.4
                             Layout.alignment: Qt.AlignVCenter
                         }
+
                         Label {
-                            text: formatDateTime(playlistModel.updatedAt)
-                            color: theme.bodyText
-                            font.pixelSize: 13
+                            text: "Modified " + formatDateTime(playlistModel.updatedAt)
+                            color: theme.mutedText
+                            font.pixelSize: 11
                             elide: Text.ElideRight
                             Layout.alignment: Qt.AlignVCenter
                         }
@@ -1509,7 +1528,7 @@ ApplicationWindow {
                     Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
 
                     IconButton {
-                        iconName: currentThemeName === "Dark" ? "moon" : "sun"
+                        iconName: currentThemeName === "Dark" ? "sun" : "moon"
                         toolTip: currentThemeName === "Dark" ? "Dark theme" : "Daylight theme"
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: currentThemeName = currentThemeName === "Dark" ? "Daylight" : "Dark"
@@ -1850,6 +1869,7 @@ ApplicationWindow {
                             onTapped: selectFragment(fragmentRow.index)
                             onDoubleTapped: {
                                 selectFragment(fragmentRow.index)
+                                previewTab = 1
                                 previewSelectedDraft()
                             }
                         }
@@ -1881,6 +1901,7 @@ ApplicationWindow {
                     property var statusState: currentStatusBar()
                     text: statusState.text
                     color: statusState.error ? theme.danger : theme.bodyText
+                    font.pixelSize: 11
                     elide: Text.ElideRight
                     verticalAlignment: Text.AlignVCenter
                     Layout.fillWidth: true
@@ -1913,14 +1934,16 @@ ApplicationWindow {
 
                 Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: width * 9 / 16 + 216
-                    Layout.minimumHeight: 390
+                    implicitHeight: sourcePreviewLayout.implicitHeight + 24
                     color: theme.block
                     radius: 14
                     border.color: theme.border
 
                     ColumnLayout {
-                        anchors.fill: parent
+                        id: sourcePreviewLayout
+                        anchors.top: parent.top
+                        anchors.left: parent.left
+                        anchors.right: parent.right
                         anchors.margins: 12
                         spacing: 8
 
@@ -1929,18 +1952,19 @@ ApplicationWindow {
                             spacing: 8
 
                             Label {
-                                text: "Source Preview"
+                                text: "Preview"
                                 color: theme.text
                                 font.pixelSize: 16
                                 font.bold: true
-                                Layout.fillWidth: true
                             }
+
+                            Item { Layout.fillWidth: true }
 
                             IconButton {
                                 iconName: "open"
                                 accentOnHover: true
-                                toolTip: "Open selected source in video window"
-                                enabled: selectedIndex >= 0 && draftValid
+                                toolTip: "Open in video window"
+                                enabled: selectedIndex >= 0
                                 onClicked: openSelectedInPlaybackWindow()
                             }
                         }
@@ -1949,6 +1973,35 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             Layout.preferredHeight: 1
                             color: theme.borderSoft
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+
+                            AppButton {
+                                text: "Source"
+                                primary: previewTab === 0
+                                Layout.fillWidth: true
+                                onClicked: {
+                                    if (previewTab !== 0) {
+                                        previewTab = 0
+                                        if (!playback.playingSource) playback.stop()
+                                    }
+                                }
+                            }
+
+                            AppButton {
+                                text: "Fragment"
+                                primary: previewTab === 1
+                                Layout.fillWidth: true
+                                onClicked: {
+                                    if (previewTab !== 1) {
+                                        previewTab = 1
+                                        if (playback.playingSource) playback.stop()
+                                    }
+                                }
+                            }
                         }
 
                         Rectangle {
@@ -1986,6 +2039,7 @@ ApplicationWindow {
                         TrimTimeline {
                             Layout.fillWidth: true
                             Layout.topMargin: -5
+                            visible: previewTab === 0
                             enabled: selectedIndex >= 0 && trimTimelineDurationMs > 1
                             durationMs: trimTimelineDurationMs
                             startMs: draftStartMs
@@ -2008,22 +2062,185 @@ ApplicationWindow {
 
                         RowLayout {
                             Layout.fillWidth: true
+                            visible: previewTab === 0
                             spacing: 8
 
                             IconButton {
-                                iconName: playback.playing ? "pause" : "play"
-                                toolTip: playback.playing ? "Pause" : "Play"
-                                enabled: playback.playing || (selectedIndex >= 0 && draftValid)
+                                visible: !showSourceTabButtonLabels
+                                iconName: (playback.playing && playback.playingSource) ? "pause" : "play"
+                                toolTip: (playback.playing && playback.playingSource) ? "Pause" : "Play source from playhead"
+                                enabled: selectedIndex >= 0
+                                onClicked: sourcePlayClicked()
+                            }
+
+                            AppButton {
+                                visible: showSourceTabButtonLabels
+                                text: (playback.playing && playback.playingSource) ? "Pause" : "Play"
+                                toolTip: (playback.playing && playback.playingSource) ? "Pause" : "Play source from playhead"
+                                enabled: selectedIndex >= 0
+                                Layout.fillWidth: true
+                                onClicked: sourcePlayClicked()
+                            }
+
+                            IconButton {
+                                visible: !showSourceTabButtonLabels
+                                iconName: "stop"
+                                toolTip: "Stop"
+                                enabled: playback.currentIndex >= 0
+                                onClicked: playback.stop()
+                            }
+
+                            AppButton {
+                                visible: showSourceTabButtonLabels
+                                text: "Stop"
+                                enabled: playback.currentIndex >= 0
+                                Layout.fillWidth: true
+                                onClicked: playback.stop()
+                            }
+
+                            AppButton {
+                                text: "Set Start"
+                                toolTip: "Set start from playhead (I)"
+                                enabled: selectedIndex >= 0
                                 Layout.fillWidth: true
                                 onClicked: {
-                                    if (playback.playing) {
+                                    draftStartMs = Math.max(0, Math.round(playback.player.position))
+                                    draftDirty = true
+                                }
+                            }
+
+                            AppButton {
+                                text: "Set End"
+                                toolTip: "Set end from playhead (O)"
+                                enabled: selectedIndex >= 0
+                                Layout.fillWidth: true
+                                onClicked: {
+                                    draftEndMs = Math.round(playback.player.position)
+                                    draftDirty = true
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            visible: previewTab === 0
+                            color: theme.borderSoft
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            visible: previewTab === 0
+                            columns: 2
+                            rowSpacing: 6
+                            columnSpacing: 10
+
+                            Label { text: "Filename"; color: theme.bodyText; font.pixelSize: 13 }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+
+                                TextField {
+                                    Layout.fillWidth: true
+                                    readOnly: true
+                                    text: selectedIndex >= 0 ? (selectedFragment.fileName || "") : ""
+                                    placeholderText: "-"
+                                    color: theme.text
+                                    selectedTextColor: "#ffffff"
+                                    selectionColor: theme.primary
+                                    font.pixelSize: 13
+                                    implicitHeight: 34
+                                    background: Rectangle {
+                                        radius: 10
+                                        color: theme.blockAlt
+                                        border.color: theme.border
+                                    }
+                                }
+
+                                IconButton {
+                                    iconName: "link"
+                                    toolTip: "Change source file"
+                                    enabled: selectedIndex >= 0
+                                    onClicked: relinkDialog.open()
+                                }
+                            }
+
+                            Label { text: "Status"; color: theme.bodyText; font.pixelSize: 13 }
+                            Item {
+                                Layout.fillWidth: true
+                                implicitHeight: statusBadge.implicitHeight
+
+                                Rectangle {
+                                    id: statusBadge
+                                    readonly property string status: selectedIndex >= 0 ? (selectedFragment.sourceStatus || "") : ""
+                                    readonly property bool isOnline: status === "Online"
+                                    readonly property bool isOffline: status === "Offline"
+                                    color: isOnline ? (currentThemeName === "Dark" ? "#1e2045" : "#ebe9ff")
+                                                    : isOffline ? (currentThemeName === "Dark" ? "#3d1a1a" : "#fad6d4")
+                                                    : theme.blockAlt
+                                    border.color: isOnline ? theme.primary : isOffline ? theme.danger : theme.border
+                                    radius: 4
+                                    implicitWidth: badgeText.implicitWidth + 12
+                                    implicitHeight: badgeText.implicitHeight + 6
+
+                                    Label {
+                                        id: badgeText
+                                        anchors.centerIn: parent
+                                        text: statusBadge.isOnline ? "OK" : statusBadge.isOffline ? "NOT FOUND" : (statusBadge.status || "-")
+                                        color: statusBadge.isOnline ? theme.primary
+                                                                     : statusBadge.isOffline ? theme.danger
+                                                                     : theme.mutedText
+                                        font.pixelSize: 11
+                                        font.bold: true
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: previewTab === 1
+                            spacing: 6
+
+                            Label {
+                                text: formatTimeMs(draftStartMs)
+                                color: theme.bodyText
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                            }
+
+                            AppSlider {
+                                Layout.fillWidth: true
+                                enabled: false
+                                from: draftStartMs
+                                to: Math.max(draftStartMs + 1, draftEndMs)
+                                value: playback.currentIndex === selectedIndex ? playback.player.position : draftStartMs
+                            }
+
+                            Label {
+                                text: formatTimeMs(draftEndMs)
+                                color: theme.bodyText
+                                font.family: "monospace"
+                                font.pixelSize: 12
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            visible: previewTab === 1
+                            spacing: 8
+
+                            AppButton {
+                                text: (playback.playing && !playback.playingSource) ? "Pause" : "Play"
+                                toolTip: (playback.playing && !playback.playingSource) ? "Pause" : "Preview trimmed range"
+                                enabled: (selectedIndex >= 0 && draftValid) || (playback.playing && !playback.playingSource)
+                                Layout.fillWidth: true
+                                onClicked: {
+                                    if (playback.playing && !playback.playingSource) {
                                         playback.pause()
-                                    } else if (playback.currentIndex >= 0) {
-                                        playback.setVideoSink(videoOutput.videoSink)
-                                        playback.resume()
                                     } else {
                                         playback.setVideoSink(videoOutput.videoSink)
-                                        playback.previewRange(playlistView.currentIndex >= 0 ? playlistView.currentIndex : 0,
+                                        playback.previewRange(selectedIndex >= 0 ? selectedIndex : 0,
                                                               draftStartMs / 1000,
                                                               draftEndMs / 1000,
                                                               draftDelayMs / 1000,
@@ -2035,31 +2252,12 @@ ApplicationWindow {
                                 }
                             }
 
-                            IconButton {
-                                iconName: "stop"
+                            AppButton {
+                                text: "Stop"
                                 toolTip: "Stop"
-                                enabled: playback.currentIndex >= 0
+                                enabled: playback.currentIndex >= 0 && !playback.playingSource
+                                Layout.fillWidth: true
                                 onClicked: playback.stop()
-                            }
-
-                            AppButton {
-                                text: "Set Start"
-                                toolTip: "Set start from playhead (I)"
-                                enabled: selectedIndex >= 0
-                                onClicked: {
-                                    draftStartMs = Math.max(0, Math.round(playback.player.position))
-                                    draftDirty = true
-                                }
-                            }
-
-                            AppButton {
-                                text: "Set End"
-                                toolTip: "Set end from playhead (O)"
-                                enabled: selectedIndex >= 0
-                                onClicked: {
-                                    draftEndMs = Math.round(playback.player.position)
-                                    draftDirty = true
-                                }
                             }
                         }
 
@@ -2083,7 +2281,7 @@ ApplicationWindow {
                             spacing: 8
 
                             Label {
-                                text: "Fragment Metadata"
+                                text: "Metadata"
                                 color: theme.text
                                 font.pixelSize: 16
                                 font.bold: true
@@ -2126,38 +2324,6 @@ ApplicationWindow {
                                 columns: 2
                                 rowSpacing: 8
                                 columnSpacing: 10
-
-                            Label { text: "Source"; color: theme.bodyText }
-                            Label {
-                                text: selectedFragment.fileName || "-"
-                                color: theme.bodyText
-                                elide: Text.ElideMiddle
-                                Layout.fillWidth: true
-                            }
-
-                            Label { text: "Source duration"; color: theme.bodyText }
-                            Label {
-                                text: sourceDurationMs > 0 ? formatTimeMs(sourceDurationMs) : "-"
-                                color: theme.bodyText
-                                font.family: "monospace"
-                                Layout.fillWidth: true
-                            }
-
-                            Label { text: "Source status"; color: theme.bodyText }
-                            Label {
-                                text: selectedFragment.sourceStatus || "-"
-                                color: selectedFragment.sourceStatus === "Missing" ? theme.danger : theme.bodyText
-                                Layout.fillWidth: true
-                            }
-
-                            Item { Layout.preferredHeight: 1 }
-                            AppButton {
-                                text: "Relink Source"
-                                toolTip: "Relink Source"
-                                enabled: selectedIndex >= 0
-                                Layout.fillWidth: true
-                                onClicked: relinkDialog.open()
-                            }
 
                             Label { text: "Label"; color: theme.bodyText }
                             TextField {
@@ -2989,7 +3155,7 @@ ApplicationWindow {
 
             Label {
                 text: formatTimeMs(trimTimeline.endMs - trimTimeline.startMs)
-                color: theme.bodyText
+                color: theme.primary
                 font.pixelSize: 11
                 font.family: "monospace"
                 horizontalAlignment: Text.AlignHCenter
@@ -3245,6 +3411,18 @@ ApplicationWindow {
         playback.cue(selectedIndex)
     }
 
+    function sourcePlayClicked() {
+        if (playback.playing && playback.playingSource) {
+            playback.pause()
+        } else if (!playback.playing && playback.playingSource && playback.currentIndex === selectedIndex) {
+            playback.setVideoSink(videoOutput.videoSink)
+            playback.resume()
+        } else {
+            playback.setVideoSink(videoOutput.videoSink)
+            playback.playSource(selectedIndex, Math.round(playback.player.position))
+        }
+    }
+
     function previewSelectedDraft() {
         if (selectedIndex < 0 || !draftValid)
             return
@@ -3264,7 +3442,7 @@ ApplicationWindow {
         if (selectedIndex < 0)
             return ""
 
-        if (selectedFragment.sourceStatus === "Missing")
+        if (selectedFragment.sourceStatus === "Offline")
             return "Source file does not exist."
 
         if (draftEndMs <= draftStartMs)
@@ -3435,21 +3613,25 @@ ApplicationWindow {
     }
 
     function openSelectedInPlaybackWindow() {
-        if (selectedIndex < 0 || !draftValid)
+        if (selectedIndex < 0)
             return
 
         playbackWindow.show()
         playbackWindow.raise()
         playbackWindow.requestActivate()
         playback.setVideoSink(playbackWindowVideo.videoSink)
-        playback.previewRange(selectedIndex,
-                              draftStartMs / 1000,
-                              draftEndMs / 1000,
-                              draftDelayMs / 1000,
-                              draftDelayColor,
-                              draftAudioEnabled,
-                              draftVolume,
-                              draftSpeed)
+        if (previewTab === 1 && draftValid) {
+            playback.previewRange(selectedIndex,
+                                  draftStartMs / 1000,
+                                  draftEndMs / 1000,
+                                  draftDelayMs / 1000,
+                                  draftDelayColor,
+                                  draftAudioEnabled,
+                                  draftVolume,
+                                  draftSpeed)
+        } else {
+            playback.playSource(selectedIndex, previewTab === 0 && playback.playingSource ? Math.round(playback.player.position) : 0)
+        }
     }
 
     function requestOpenPlaylist() {
