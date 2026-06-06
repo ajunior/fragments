@@ -292,6 +292,14 @@ int PlaylistModel::count() const
     return rowCount();
 }
 
+double PlaylistModel::totalDuration() const
+{
+    double total = 0.0;
+    for (const Fragment &fragment : m_items)
+        total += fragment.end - fragment.start;
+    return total;
+}
+
 QString PlaylistModel::name() const
 {
     return m_name;
@@ -453,6 +461,7 @@ bool PlaylistModel::setData(const QModelIndex &index, const QVariant &value, int
     fragment = changed;
 
     emit dataChanged(index, index, {role, DurationRole, SourceStatusRole, ValidRole, ValidationMessageRole});
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
     return true;
@@ -534,6 +543,7 @@ void PlaylistModel::addFragment(const QUrl &source)
     m_items.push_back(fragment);
     endInsertRows();
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
 }
@@ -550,6 +560,7 @@ int PlaylistModel::duplicateFragment(int row)
     m_items.insert(m_items.begin() + insertRow, m_items.at(static_cast<size_t>(row)));
     endInsertRows();
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
     return insertRow;
@@ -566,6 +577,7 @@ void PlaylistModel::removeFragment(int row)
     m_items.erase(m_items.begin() + row);
     endRemoveRows();
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
 }
@@ -601,6 +613,7 @@ void PlaylistModel::clear()
     m_items.clear();
     endResetModel();
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
 }
@@ -628,6 +641,7 @@ void PlaylistModel::newPlaylist()
     }
     setTimestamps(QDateTime(), QDateTime());
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setFileUrl(QUrl());
     setModified(false);
@@ -710,6 +724,7 @@ bool PlaylistModel::load(const QUrl &fileUrl)
         emit repeatChanged();
     }
     emit countChanged();
+    emit totalDurationChanged();
     emit validityChanged();
     setFileUrl(fileUrl);
     setModified(false);
@@ -932,6 +947,7 @@ void PlaylistModel::updateFragment(int row, const QVariantMap &values)
     changedRoles.append(ValidRole);
     changedRoles.append(ValidationMessageRole);
     emit dataChanged(itemIndex, itemIndex, changedRoles);
+    emit totalDurationChanged();
     emit validityChanged();
     setModified(true);
 }
@@ -1039,6 +1055,7 @@ void PlaylistModel::restoreState(const ModelState &state)
 
     if (previousCount != rowCount()) {
         emit countChanged();
+    emit totalDurationChanged();
     }
     if (previousName != m_name) {
         emit nameChanged();

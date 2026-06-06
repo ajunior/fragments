@@ -20,6 +20,8 @@ class PlaybackController : public QObject
     Q_PROPERTY(double currentEnd READ currentEnd NOTIFY currentFragmentChanged)
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
     Q_PROPERTY(bool playingSource READ playingSource NOTIFY playingSourceChanged)
+    Q_PROPERTY(bool muted READ muted WRITE setMuted NOTIFY mutedChanged)
+    Q_PROPERTY(bool stopAfterCurrent READ stopAfterCurrent NOTIFY stopAfterCurrentChanged)
     Q_PROPERTY(bool delayActive READ delayActive NOTIFY delayStateChanged)
     Q_PROPERTY(QString currentDelayColor READ currentDelayColor NOTIFY currentFragmentChanged)
     Q_PROPERTY(int delayRemainingMs READ delayRemainingMs NOTIFY delayProgressChanged)
@@ -35,6 +37,9 @@ public:
     double currentEnd() const;
     bool playing() const;
     bool playingSource() const;
+    bool stopAfterCurrent() const;
+    bool muted() const;
+    Q_INVOKABLE void setMuted(bool muted);
     bool delayActive() const;
     QString currentDelayColor() const;
     int delayRemainingMs() const;
@@ -59,6 +64,8 @@ signals:
     void currentFragmentChanged();
     void playingChanged();
     void playingSourceChanged();
+    void stopAfterCurrentChanged();
+    void mutedChanged();
     void delayStateChanged();
     void delayProgressChanged();
     void playbackError(const QString &message);
@@ -69,6 +76,7 @@ private:
     void setCurrentIndex(int index);
     void setPlaying(bool playing);
     void setPlayingSource(bool playingSource);
+    void setStopAfterCurrent(bool value);
     void clearPreviewOverride();
     double effectiveStart(const Fragment &fragment) const;
     double effectiveEnd(const Fragment &fragment) const;
@@ -86,6 +94,7 @@ private:
     int m_currentIndex = -1;
     bool m_playing = false;
     bool m_playingSource = false;
+    bool m_userMuted = false;
     bool m_stopAfterCurrent = false;
     bool m_hasPreviewOverride = false;
     qint64 m_startPositionOverrideMs = -1;

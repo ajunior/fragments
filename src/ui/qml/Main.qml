@@ -1192,14 +1192,48 @@ ApplicationWindow {
         color: "#000000"
         property bool controlsVisible: true
 
+        // Stable mode set at open time — 0=playlist, 1=fragment, 2=source
+        property int windowMode: 0
+        property int wFragIndex: -1
+        property int wFragN: 0
+        property string wFragLabel: ""
+        property double wStartSec: 0
+        property double wEndSec: 0
+        property double wDelaySec: 0
+        property string wDelayColor: "#000000"
+        property bool wAudioEnabled: true
+        property double wVolume: 1.0
+        property double wSpeed: 1.0
+        property string wFileName: ""
+
+        function playOrResume() {
+            if (playback.playing) {
+                playback.pause()
+            } else if (windowMode === 1) {
+                playback.setVideoSink(playbackWindowVideo.videoSink)
+                playback.previewRange(wFragIndex, wStartSec, wEndSec, wDelaySec, wDelayColor, wAudioEnabled, wVolume, wSpeed)
+            } else if (windowMode === 2) {
+                playback.setVideoSink(playbackWindowVideo.videoSink)
+                playback.playSource(wFragIndex, 0)
+            } else {
+                playback.setVideoSink(playbackWindowVideo.videoSink)
+                playback.resume()
+            }
+        }
+
         onVisibleChanged: {
             if (visible) {
+                playback.setMuted(false)
                 playback.setVideoSink(playbackWindowVideo.videoSink)
                 showPlaybackControls()
             } else {
                 if (visibility === Window.FullScreen)
                     showNormal()
-                playback.setVideoSink(videoOutput.videoSink)
+                if (windowMode === 0) {
+                    playback.stop()
+                } else {
+                    playback.setVideoSink(videoOutput.videoSink)
+                }
             }
         }
 
@@ -1207,7 +1241,7 @@ ApplicationWindow {
 
         Shortcut {
             sequence: "Space"
-            onActivated: playback.playing ? playback.pause() : playback.resume()
+            onActivated: playbackWindow.playOrResume()
         }
 
         Shortcut {
@@ -1256,62 +1290,140 @@ ApplicationWindow {
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                height: 58
-                color: "#99000000"
-                opacity: playbackWindow.controlsVisible || playbackWindow.visibility !== Window.FullScreen || !playback.playing ? 1 : 0
+                height: 72
+                color: "#c0000000"
+                opacity: !playback.playing || playbackWindow.controlsVisible ? 1 : 0
                 visible: opacity > 0
 
-                Behavior on opacity { NumberAnimation { duration: 180 } }
+                Behavior on opacity { NumberAnimation { duration: 220 } }
 
-                RowLayout {
+                ColumnLayout {
                     anchors.fill: parent
-                    anchors.leftMargin: 14
-                    anchors.rightMargin: 14
-                    spacing: 10
+                    anchors.leftMargin: 12
+                    anchors.rightMargin: 12
+                    anchors.topMargin: 6
+                    anchors.bottomMargin: 4
+                    spacing: 0
 
-                    Label {
-                        text: playback.currentIndex >= 0 ? "Fragment " + (playback.currentIndex + 1) : "Ready"
-                        color: "#ffffff"
-                        font.pixelSize: 14
-                        Layout.minimumWidth: 110
+                    // Row 1: fragment label | slider | elapsed / total
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 10
+
+                        Label {
+                            visible: playbackWindow.windowMode !== 2
+                            text: playbackWindow.windowMode === 0
+                                ? (playback.currentIndex < 0 ? "Ready" : "Fragment " + (playback.currentIndex + 1) + "/" + playlistModel.count)
+                                : "Fragment " + playbackWindow.wFragN
+                            color: "#ffffff"
+                            font.pixelSize: 12
+                        }
+
+                        Label {
+                            visible: playbackWindow.windowMode === 2
+                            text: formatTime(playback.player.position / 1000)
+                            color: "#ffffff"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                        }
+
+                        AppSlider {
+                            Layout.fillWidth: true
+                            from: playbackWindow.windowMode === 1 ? playbackWindow.wStartSec * 1000 : 0
+                            to: {
+                                if (playbackWindow.windowMode === 2) return Math.max(from + 1, playback.player.duration)
+                                if (playbackWindow.windowMode === 1) return Math.max(from + 1, playbackWindow.wEndSec * 1000)
+                                return Math.max(from + 1, playback.currentEnd * 1000)
+                            }
+                            value: Math.max(from, Math.min(to, playback.player.position))
+                            onMoved: playback.player.position = value
+                        }
+
+                        Label {
+                            readonly property double elapsed: {
+                                const s = playbackWindow.windowMode === 1 ? playbackWindow.wStartSec : playback.currentStart
+                                return Math.max(0, playback.player.position / 1000 - s)
+                            }
+                            readonly property double total: {
+                                if (playbackWindow.windowMode === 2) return playback.player.duration / 1000
+                                if (playbackWindow.windowMode === 1) return Math.max(0, playbackWindow.wEndSec - playbackWindow.wStartSec)
+                                return Math.max(0, playback.currentEnd - playback.currentStart)
+                            }
+                            text: playbackWindow.windowMode === 2
+                                ? formatTime(total)
+                                : formatTime(elapsed) + " / " + formatTime(total)
+                            color: "#ffffff"
+                            font.family: "monospace"
+                            font.pixelSize: 12
+                        }
                     }
 
-                    Label {
-                        text: formatTime(playback.player.position / 1000)
-                        color: "#ffffff"
-                        font.family: "monospace"
-                        Layout.preferredWidth: 78
-                    }
+                    // Row 2: [play][prev][next] ... center info ... [fullscreen]
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
 
-                    AppSlider {
-                        Layout.preferredWidth: 260
-                        from: playback.playingSource ? 0 : playback.currentStart * 1000
-                        to: Math.max(from + 1, playback.playingSource ? playback.player.duration : playback.currentEnd * 1000)
-                        value: Math.max(from, Math.min(to, playback.player.position))
-                        onMoved: playback.player.position = value
-                    }
+                        IconButton {
+                            darkMode: true
+                            iconName: (playback.playing && !playback.delayActive) ? "pause" : "play"
+                            toolTip: playback.playing ? "Pause" : "Play"
+                            onClicked: playbackWindow.playOrResume()
+                        }
 
-                    Label {
-                        text: playback.playingSource ? formatTime(playback.player.duration / 1000) : formatTime(playback.currentEnd)
-                        color: "#ffffff"
-                        font.family: "monospace"
-                        Layout.preferredWidth: 78
-                    }
+                        IconButton {
+                            darkMode: true
+                            iconName: "prev"
+                            toolTip: "Previous"
+                            visible: playbackWindow.windowMode === 0
+                            enabled: playback.currentIndex > 0
+                            onClicked: playback.previous()
+                        }
 
-                    AppButton {
-                        text: "Pause"
-                        enabled: playback.playing
-                        onClicked: playback.pause()
-                    }
+                        IconButton {
+                            darkMode: true
+                            iconName: "next"
+                            toolTip: "Next"
+                            visible: playbackWindow.windowMode === 0
+                            enabled: playback.currentIndex >= 0 && playback.currentIndex < playlistModel.count - 1
+                            onClicked: playback.next()
+                        }
 
-                    AppButton {
-                        text: "Stop"
-                        onClicked: playback.stop()
-                    }
+                        IconButton {
+                            darkMode: true
+                            iconName: playback.muted ? "volume_off" : "volume_up"
+                            toolTip: playback.muted ? "Unmute" : "Mute"
+                            onClicked: playback.setMuted(!playback.muted)
+                        }
 
-                    AppButton {
-                        text: playbackWindow.visibility === Window.FullScreen ? "Window" : "Fullscreen"
-                        onClicked: togglePlaybackFullscreen()
+                        Item { Layout.fillWidth: true }
+
+                        Label {
+                            text: {
+                                if (playbackWindow.windowMode === 1) return playbackWindow.wFragLabel
+                                if (playbackWindow.windowMode === 2) return playbackWindow.wFileName
+                                let elapsed = 0
+                                for (let i = 0; i < playback.currentIndex && i < playlistModel.count; i++) {
+                                    const f = playlistModel.get(i)
+                                    elapsed += (f.end || 0) - (f.start || 0)
+                                }
+                                if (playback.currentIndex >= 0)
+                                    elapsed += Math.max(0, playback.player.position / 1000 - playback.currentStart)
+                                return "Playlist time: " + formatTime(elapsed) + " / " + formatTime(playlistModel.totalDuration)
+                            }
+                            color: "#99ffffff"
+                            font.pixelSize: 12
+                            font.family: "monospace"
+                            elide: Text.ElideRight
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        IconButton {
+                            darkMode: true
+                            iconName: playbackWindow.visibility === Window.FullScreen ? "fullscreen_exit" : "fullscreen"
+                            toolTip: playbackWindow.visibility === Window.FullScreen ? "Exit fullscreen" : "Fullscreen"
+                            onClicked: togglePlaybackFullscreen()
+                        }
                     }
                 }
             }
@@ -1319,10 +1431,10 @@ ApplicationWindow {
 
         Timer {
             id: playbackControlsHideTimer
-            interval: 2000
+            interval: 2500
             repeat: false
             onTriggered: {
-                if (playbackWindow.visibility === Window.FullScreen && playback.playing)
+                if (playback.playing)
                     playbackWindow.controlsVisible = false
             }
         }
@@ -1693,10 +1805,11 @@ ApplicationWindow {
                     }
 
                     AppButton {
-                        text: "Play All"
+                        text: "Start Playlist"
                         enabled: playlistModel.count > 0 && playlistModel.valid
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: {
+                            playbackWindow.windowMode = 0
                             playbackWindow.show()
                             playbackWindow.raise()
                             playbackWindow.requestActivate()
@@ -2807,6 +2920,7 @@ ApplicationWindow {
         property string iconName: ""
         property string toolTip: ""
         property bool accentOnHover: false
+        property bool darkMode: false
 
         readonly property var iconGlyphs: ({
             "menu": "menu",
@@ -2827,11 +2941,15 @@ ApplicationWindow {
             "next": "skip_next",
             "play": "play_arrow",
             "pause": "pause",
-            "stop": "stop"
+            "stop": "stop",
+            "fullscreen": "fullscreen",
+            "fullscreen_exit": "fullscreen_exit",
+            "volume_up": "volume_up",
+            "volume_off": "volume_off"
         })
 
-        implicitWidth: 38
-        implicitHeight: 34
+        implicitWidth: darkMode ? 44 : 38
+        implicitHeight: darkMode ? 44 : 34
         hoverEnabled: true
         ToolTip.visible: hovered && toolTip.length > 0
         ToolTip.text: toolTip
@@ -2840,23 +2958,28 @@ ApplicationWindow {
             Label {
                 anchors.centerIn: parent
                 text: iconButton.iconGlyphs[iconButton.iconName] || "\u25A1"
-                color: iconButton.enabled && iconButton.accentOnHover && (iconButton.hovered || iconButton.down) ? "#ffffff" : theme.text
+                color: iconButton.darkMode
+                    ? (iconButton.enabled ? "#ffffff" : "#66ffffff")
+                    : (iconButton.enabled && iconButton.accentOnHover && (iconButton.hovered || iconButton.down) ? "#ffffff" : theme.text)
                 font.family: materialSymbols.name.length > 0 ? materialSymbols.name : "Noto Sans Symbols 2"
-                font.pixelSize: 18
+                font.pixelSize: iconButton.darkMode ? 24 : 18
                 font.bold: false
                 horizontalAlignment: Text.AlignHCenter
                 verticalAlignment: Text.AlignVCenter
-                width: 20
-                height: 20
+                width: iconButton.darkMode ? 28 : 20
+                height: iconButton.darkMode ? 28 : 20
             }
         }
 
         background: Rectangle {
-            radius: 10
-            color: iconButton.enabled && iconButton.accentOnHover && iconButton.down ? theme.primaryStrong
+            radius: iconButton.darkMode ? iconButton.width / 2 : 10
+            color: iconButton.darkMode
+                ? (iconButton.enabled && iconButton.down ? "#50ffffff" : iconButton.enabled && iconButton.hovered ? "#28ffffff" : "transparent")
+                : (iconButton.enabled && iconButton.accentOnHover && iconButton.down ? theme.primaryStrong
                    : (iconButton.enabled && iconButton.accentOnHover && iconButton.hovered ? theme.primary
-                   : (iconButton.enabled && iconButton.down ? theme.blockAlt : (iconButton.enabled && iconButton.hovered ? theme.selected : theme.block)))
-            border.color: iconButton.enabled && iconButton.hovered ? theme.primary : theme.border
+                   : (iconButton.enabled && iconButton.down ? theme.blockAlt : (iconButton.enabled && iconButton.hovered ? theme.selected : theme.block))))
+            border.color: iconButton.darkMode ? "transparent"
+                        : (iconButton.enabled && iconButton.hovered ? theme.primary : theme.border)
 
             Behavior on color { ColorAnimation { duration: 100 } }
             Behavior on border.color { ColorAnimation { duration: 100 } }
@@ -3620,16 +3743,27 @@ ApplicationWindow {
         playbackWindow.raise()
         playbackWindow.requestActivate()
         playback.setVideoSink(playbackWindowVideo.videoSink)
+
         if (previewTab === 1 && draftValid) {
-            playback.previewRange(selectedIndex,
-                                  draftStartMs / 1000,
-                                  draftEndMs / 1000,
-                                  draftDelayMs / 1000,
-                                  draftDelayColor,
-                                  draftAudioEnabled,
-                                  draftVolume,
-                                  draftSpeed)
+            playbackWindow.windowMode = 1
+            playbackWindow.wFragIndex = selectedIndex
+            playbackWindow.wFragN = selectedIndex + 1
+            playbackWindow.wFragLabel = selectedFragment.label || ""
+            playbackWindow.wStartSec = draftStartMs / 1000
+            playbackWindow.wEndSec = draftEndMs / 1000
+            playbackWindow.wDelaySec = draftDelayMs / 1000
+            playbackWindow.wDelayColor = draftDelayColor
+            playbackWindow.wAudioEnabled = draftAudioEnabled
+            playbackWindow.wVolume = draftVolume
+            playbackWindow.wSpeed = draftSpeed
+            playback.previewRange(selectedIndex, draftStartMs / 1000, draftEndMs / 1000,
+                                  draftDelayMs / 1000, draftDelayColor, draftAudioEnabled, draftVolume, draftSpeed)
         } else {
+            playbackWindow.windowMode = 2
+            playbackWindow.wFragIndex = selectedIndex
+            playbackWindow.wFragN = selectedIndex + 1
+            playbackWindow.wFragLabel = selectedFragment.label || ""
+            playbackWindow.wFileName = selectedFragment.fileName || ""
             playback.playSource(selectedIndex, previewTab === 0 && playback.playingSource ? Math.round(playback.player.position) : 0)
         }
     }
@@ -3789,7 +3923,7 @@ ApplicationWindow {
     function showPlaybackControls() {
         playbackWindow.controlsVisible = true
         playbackControlsHideTimer.stop()
-        if (playbackWindow.visible && playbackWindow.visibility === Window.FullScreen && playback.playing)
+        if (playbackWindow.visible && playback.playing)
             playbackControlsHideTimer.start()
     }
 }

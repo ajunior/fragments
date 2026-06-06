@@ -13,6 +13,7 @@ class PlaylistModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(double totalDuration READ totalDuration NOTIFY totalDurationChanged)
     Q_PROPERTY(QString name READ name WRITE setName NOTIFY nameChanged)
     Q_PROPERTY(bool nameValid READ nameValid NOTIFY nameChanged)
     Q_PROPERTY(QString nameValidationMessage READ nameValidationMessage NOTIFY nameChanged)
@@ -50,6 +51,7 @@ public:
 
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     int count() const;
+    double totalDuration() const;
     QString name() const;
     void setName(const QString &name);
     bool nameValid() const;
@@ -91,6 +93,7 @@ public:
 
 signals:
     void countChanged();
+    void totalDurationChanged();
     void nameChanged();
     void repeatChanged();
     void timestampsChanged();

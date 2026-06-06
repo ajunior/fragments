@@ -132,7 +132,7 @@ void PlaybackController::cue(int index)
         return;
     }
 
-    m_stopAfterCurrent = true;
+    setStopAfterCurrent(true);
     clearPreviewOverride();
     m_delayTimer.stop();
     m_endTimer.stop();
@@ -166,13 +166,33 @@ void PlaybackController::setPlayingSource(bool playingSource)
     emit playingSourceChanged();
 }
 
+bool PlaybackController::stopAfterCurrent() const { return m_stopAfterCurrent; }
+
+bool PlaybackController::muted() const { return m_userMuted; }
+
+void PlaybackController::setMuted(bool muted)
+{
+    if (m_userMuted == muted) return;
+    m_userMuted = muted;
+    const Fragment *fragment = m_playlist ? m_playlist->fragmentAt(m_currentIndex) : nullptr;
+    m_backend->setMuted(m_userMuted || (fragment && !effectiveAudioEnabled(*fragment)));
+    emit mutedChanged();
+}
+
+void PlaybackController::setStopAfterCurrent(bool value)
+{
+    if (m_stopAfterCurrent == value) return;
+    m_stopAfterCurrent = value;
+    emit stopAfterCurrentChanged();
+}
+
 void PlaybackController::play(int index)
 {
     if (!m_playlist || m_playlist->rowCount() == 0) {
         return;
     }
 
-    m_stopAfterCurrent = false;
+    setStopAfterCurrent(false);
     setPlayingSource(false);
     clearPreviewOverride();
 
@@ -195,7 +215,7 @@ void PlaybackController::preview(int index)
         return;
     }
 
-    m_stopAfterCurrent = true;
+    setStopAfterCurrent(true);
     setPlayingSource(false);
     clearPreviewOverride();
     setCurrentIndex(index);
@@ -208,7 +228,7 @@ void PlaybackController::previewRange(int index, double start, double end, doubl
         return;
     }
 
-    m_stopAfterCurrent = true;
+    setStopAfterCurrent(true);
     setPlayingSource(false);
     m_hasPreviewOverride = true;
     m_previewStart = qMax(0.0, start);
@@ -229,7 +249,7 @@ void PlaybackController::playSource(int index, qint64 positionMs)
         return;
     }
 
-    m_stopAfterCurrent = true;
+    setStopAfterCurrent(true);
     clearPreviewOverride();
     setPlayingSource(true);
     m_startPositionOverrideMs = positionMs;
@@ -265,7 +285,7 @@ void PlaybackController::resume()
 
 void PlaybackController::stop()
 {
-    m_stopAfterCurrent = false;
+    setStopAfterCurrent(false);
     setPlayingSource(false);
     clearPreviewOverride();
     m_delayTimer.stop();
@@ -374,7 +394,7 @@ void PlaybackController::startCurrentNow()
         return;
     }
 
-    m_backend->setMuted(!effectiveAudioEnabled(*fragment));
+    m_backend->setMuted(m_userMuted || !effectiveAudioEnabled(*fragment));
     m_backend->setVolume(effectiveVolume(*fragment));
     m_backend->setPlaybackRate(effectiveSpeed(*fragment));
     m_backend->setSource(fragment->source);
