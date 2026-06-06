@@ -218,7 +218,7 @@ ApplicationWindow {
         }
 
         rememberRecentPlaylist(fileUrl)
-        playlistView.currentIndex = playlistModel.count > 0 ? 0 : -1
+        playlistView.currentIndex = -1
         loadDraftFromSelection()
         setStatusBarMessage("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
         return true
@@ -1336,6 +1336,10 @@ ApplicationWindow {
         target: playback
         function onPlaybackError(message) { setStatusBarMessage("Playback failed: " + message, true) }
         function onPlayingChanged() { showPlaybackControls() }
+        function onCurrentIndexChanged() {
+            if (playback.playing && playback.currentIndex >= 0 && playback.currentIndex !== playlistView.currentIndex)
+                playlistView.currentIndex = playback.currentIndex
+        }
     }
 
     Connections {
@@ -1661,10 +1665,16 @@ ApplicationWindow {
 
                     Item { Layout.fillWidth: true }
 
+                    IconButton {
+                        iconName: "prev"
+                        toolTip: "Previous"
+                        enabled: playlistView.currentIndex > 0
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: playlistView.currentIndex -= 1
+                    }
 
                     AppButton {
                         text: "Play All"
-                        primary: true
                         enabled: playlistModel.count > 0 && playlistModel.valid
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: {
@@ -1676,27 +1686,44 @@ ApplicationWindow {
                         }
                     }
 
-                    AppButton {
-                        text: "Previous"
-                        enabled: playlistModel.count > 0
+                    IconButton {
+                        iconName: "next"
+                        toolTip: "Next"
+                        enabled: playlistView.currentIndex >= 0 && playlistView.currentIndex < playlistModel.count - 1
                         Layout.alignment: Qt.AlignVCenter
-                        onClicked: playback.previous()
-                    }
-
-                    AppButton {
-                        text: "Next"
-                        enabled: playlistModel.count > 0
-                        Layout.alignment: Qt.AlignVCenter
-                        onClicked: playback.next()
+                        onClicked: playlistView.currentIndex += 1
                     }
 
                     AppButton {
                         text: "+"
-                        primary: true
                         implicitWidth: 34
                         enabled: playlistModel.hasPlaylist
                         Layout.alignment: Qt.AlignVCenter
                         onClicked: mediaDialog.open()
+                    }
+
+                    IconButton {
+                        iconName: "copy"
+                        toolTip: "Duplicate"
+                        enabled: selectedIndex >= 0
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: duplicateSelectedFragment()
+                    }
+
+                    IconButton {
+                        iconName: "trash"
+                        toolTip: "Remove"
+                        enabled: selectedIndex >= 0
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: removeSelectedFragment()
+                    }
+
+                    IconButton {
+                        iconName: "ios_share"
+                        toolTip: "Export fragment"
+                        enabled: selectedIndex >= 0
+                        Layout.alignment: Qt.AlignVCenter
+                        onClicked: openFragmentExportDialog(selectedIndex)
                     }
                 }
 
@@ -2339,28 +2366,6 @@ ApplicationWindow {
                             Item { Layout.fillWidth: true }
 
                             IconButton {
-                                iconName: "ios_share"
-                                toolTip: "Export fragment"
-                                accentOnHover: true
-                                enabled: selectedIndex >= 0
-                                onClicked: openFragmentExportDialog(selectedIndex)
-                            }
-
-                            IconButton {
-                                iconName: "trash"
-                                toolTip: "Remove"
-                                enabled: selectedIndex >= 0
-                                onClicked: removeSelectedFragment()
-                            }
-
-                            IconButton {
-                                iconName: "copy"
-                                toolTip: "Duplicate"
-                                enabled: selectedIndex >= 0
-                                onClicked: duplicateSelectedFragment()
-                            }
-
-                            IconButton {
                                 iconName: "undo"
                                 toolTip: "Reset"
                                 enabled: selectedIndex >= 0 && draftDirty
@@ -2671,7 +2676,9 @@ ApplicationWindow {
             "palette": "palette",
             "arrow-up": "publish",
             "arrow-down": "arrow_downward",
-            "ios_share": "ios_share"
+            "ios_share": "ios_share",
+            "prev": "skip_previous",
+            "next": "skip_next"
         })
 
         implicitWidth: 38
@@ -3339,7 +3346,7 @@ ApplicationWindow {
         if (loaded) {
             try {
                 addRecentPlaylist(fileUrl)
-                playlistView.currentIndex = playlistModel.count > 0 ? 0 : -1
+                playlistView.currentIndex = -1
                 loadDraftFromSelection()
                 setStatusBarMessage("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
             } catch (error) {
