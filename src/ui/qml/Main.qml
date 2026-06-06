@@ -109,16 +109,18 @@ ApplicationWindow {
     property int exportGifFps: 15
     property string exportOutputUrl: ""
     property bool pendingExportSettingsOpen: false
-    property string statusBarMessage: ""
-    property bool statusBarMessageIsError: false
+    property string toastMessage: ""
+    property bool toastIsError: false
     FontLoader {
         id: materialSymbols
         source: "qrc:/assets/fonts/MaterialSymbolsOutlined[FILL,GRAD,opsz,wght].ttf"
     }
 
-    function setStatusBarMessage(message, isError) {
-        statusBarMessage = message
-        statusBarMessageIsError = !!isError
+    function showToast(message, isError) {
+        toastMessage = message
+        toastIsError = !!isError
+        toastTimer.restart()
+        if (isError) toastTimer.stop()
     }
 
     function exportIsGif() {
@@ -202,7 +204,7 @@ ApplicationWindow {
 
     function openPlaylistFromUrl(fileUrl) {
         if (!fileUrl || fileUrl.toString().length === 0) {
-            setStatusBarMessage("No playlist file selected.", true)
+            showToast("No playlist file selected.", true)
             return false
         }
 
@@ -215,14 +217,14 @@ ApplicationWindow {
 
         if (!loaded) {
             forgetRecentPlaylist(fileUrl)
-            setStatusBarMessage("Could not open " + fileUrl.toString(), true)
+            showToast("Could not open " + fileUrl.toString(), true)
             return false
         }
 
         rememberRecentPlaylist(fileUrl)
         playlistView.currentIndex = -1
         loadDraftFromSelection()
-        setStatusBarMessage("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
+        showToast("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
         return true
     }
 
@@ -238,7 +240,7 @@ ApplicationWindow {
         playlistModel.newPlaylist()
         playlistView.currentIndex = -1
         loadDraftFromSelection()
-        setStatusBarMessage("Created new playlist.", false)
+        showToast("Created new playlist.", false)
     }
 
     function continueAfterUnsavedConfirmation() {
@@ -255,7 +257,7 @@ ApplicationWindow {
             playlistModel.newPlaylist()
             playlistView.currentIndex = -1
             loadDraftFromSelection()
-            setStatusBarMessage("Created new playlist.", false)
+            showToast("Created new playlist.", false)
         } else if (action === "close") {
             forceClose = true
             root.close()
@@ -291,13 +293,13 @@ ApplicationWindow {
 
     function startExportFromDialog() {
         if (!exportOutputUrl || exportOutputUrl.length === 0) {
-            setStatusBarMessage("Choose an output file.", true)
+            showToast("Choose an output file.", true)
             return
         }
 
         const exportRow = exportScopeIndex === 1 ? selectedIndex : -1
         if (exportScopeIndex === 1 && exportRow < 0) {
-            setStatusBarMessage("Select a fragment to export.", true)
+            showToast("Select a fragment to export.", true)
             return
         }
 
@@ -335,7 +337,7 @@ ApplicationWindow {
 
     function openFragmentExportDialog(index) {
         if (index < 0) {
-            setStatusBarMessage("Select a fragment to export.", true)
+            showToast("Select a fragment to export.", true)
             return
         }
         selectFragment(index)
@@ -370,32 +372,6 @@ ApplicationWindow {
         return index >= 0 && index < recentPlaylistUrls.length ? recentPlaylistUrls[index] : ""
     }
 
-    function currentStatusBar() {
-        if (statusBarMessage.length > 0)
-            return { text: statusBarMessage, error: statusBarMessageIsError }
-
-        if (selectedIndex >= 0) {
-            if (!draftValid)
-                return { text: draftValidationMessage, error: true }
-
-            if (selectedFragment.sourceStatus === "Offline")
-                return { text: "Source missing: " + (selectedFragment.fileName || "Unknown source"), error: true }
-
-            if (selectedFragment.sourceStatus && selectedFragment.sourceStatus !== "Online")
-                return { text: selectedFragment.sourceStatus, error: false }
-        }
-
-        if (!exporter.ffmpegAvailable) {
-            return {
-                text: exporter.exportReadinessMessage.length > 0
-                    ? exporter.exportReadinessMessage
-                    : "FFmpeg is missing, so export and GIF are not available.",
-                error: true
-            }
-        }
-
-        return { text: "", error: false }
-    }
 
     Settings {
         id: appSettings
@@ -450,11 +426,11 @@ ApplicationWindow {
         nameFilters: ["Fragments playlist (*.json)", "All files (*)"]
         onAccepted: {
             const fileUrl = selectedFile
-            setStatusBarMessage("Opening " + fileUrl.toString(), false)
+            showToast("Opening " + fileUrl.toString(), false)
             try {
                 root.openPlaylistFromUrl(fileUrl)
             } catch (error) {
-                setStatusBarMessage(String(error), true)
+                showToast(String(error), true)
             }
         }
     }
@@ -692,7 +668,7 @@ ApplicationWindow {
         title: "Find Missing Media"
         onAccepted: {
             const count = playlistModel.relinkMissingFromFolder(selectedFolder)
-            setStatusBarMessage(count > 0 ? "Relinked " + count + " missing source" + (count === 1 ? "" : "s") : "No matching files found", count <= 0)
+            showToast(count > 0 ? "Relinked " + count + " missing source" + (count === 1 ? "" : "s") : "No matching files found", count <= 0)
             missingMediaDialog.close()
             loadDraftFromSelection()
         }
@@ -761,7 +737,7 @@ ApplicationWindow {
 
     Dialog {
         id: missingMediaDialog
-        title: "Missing Media"
+        title: "Relink from Folder"
         modal: true
         width: 620
         height: 420
@@ -1442,13 +1418,13 @@ ApplicationWindow {
 
     Connections {
         target: playlistModel
-        function onLoadFailed(message) { setStatusBarMessage("Load failed: " + message, true) }
-        function onSaveFailed(message) { setStatusBarMessage("Save failed: " + message, true) }
+        function onLoadFailed(message) { showToast("Load failed: " + message, true) }
+        function onSaveFailed(message) { showToast("Save failed: " + message, true) }
     }
 
     Connections {
         target: playback
-        function onPlaybackError(message) { setStatusBarMessage("Playback failed: " + message, true) }
+        function onPlaybackError(message) { showToast("Playback failed: " + message, true) }
         function onPlayingChanged() { showPlaybackControls() }
         function onCurrentIndexChanged() {
             if (playback.playing && playback.currentIndex >= 0 && playback.currentIndex !== playlistView.currentIndex)
@@ -1463,10 +1439,10 @@ ApplicationWindow {
                 exportStatusDialog.open()
         }
         function onExportFinished(outputUrl) {
-            setStatusBarMessage("Exported " + recentPlaylistLabel(outputUrl), false)
+            showToast("Exported " + recentPlaylistLabel(outputUrl), false)
         }
         function onExportFailed(message) {
-            setStatusBarMessage("Export failed: " + message, true)
+            showToast("Export failed: " + message, true)
             exportStatusDialog.open()
         }
     }
@@ -1744,7 +1720,7 @@ ApplicationWindow {
                 }
             }
             ProjectMenuItem {
-                text: "Recover Missing Media"
+                text: "Relink from Folder…"
                 enabled: playlistModel.missingSources().length > 0
                 onTriggered: {
                     closeProjectMenu()
@@ -1764,8 +1740,7 @@ ApplicationWindow {
             id: leftPane
             anchors.left: parent.left
             anchors.top: parent.top
-            anchors.bottom: statusBar.top
-            anchors.bottomMargin: 8
+            anchors.bottom: parent.bottom
             width: Math.round((parent.width - 14) * 0.73)
             color: theme.block
             radius: 14
@@ -1990,37 +1965,6 @@ ApplicationWindow {
                     }
                 }
 
-            }
-        }
-
-        Rectangle {
-            id: statusBar
-            anchors.left: parent.left
-            anchors.bottom: parent.bottom
-            width: leftPane.width
-            height: 38
-            radius: 12
-            color: theme.block
-            border.color: theme.border
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12
-                anchors.rightMargin: 12
-                spacing: 10
-
-                Label {
-                    id: statusText
-                    property var statusState: currentStatusBar()
-                    text: statusState.text
-                    color: statusState.error ? theme.danger : theme.bodyText
-                    font.pixelSize: 11
-                    elide: Text.ElideRight
-                    verticalAlignment: Text.AlignVCenter
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignVCenter
-                    visible: text.length > 0
-                }
             }
         }
 
@@ -2945,7 +2889,8 @@ ApplicationWindow {
             "fullscreen": "fullscreen",
             "fullscreen_exit": "fullscreen_exit",
             "volume_up": "volume_up",
-            "volume_off": "volume_off"
+            "volume_off": "volume_off",
+            "close": "close"
         })
 
         implicitWidth: darkMode ? 44 : 38
@@ -3600,28 +3545,28 @@ ApplicationWindow {
 
     function openPlaylistFile(fileUrl) {
         if (!fileUrl || fileUrl.toString().length === 0) {
-            setStatusBarMessage("No playlist file selected.", true)
+            showToast("No playlist file selected.", true)
             return false
         }
 
-        setStatusBarMessage("Opening " + fileUrl.toString(), false)
+        showToast("Opening " + fileUrl.toString(), false)
 
         let loaded = false
         try {
             loaded = playlistModel.load(fileUrl)
         } catch (error) {
-            setStatusBarMessage(String(error), true)
+            showToast(String(error), true)
             return false
         }
 
         if (!loaded) {
             const localPath = localPathFromFileUrl(fileUrl)
             if (localPath.length > 0 && localPath !== fileUrl.toString()) {
-                setStatusBarMessage("Retrying as " + localPath, false)
+                showToast("Retrying as " + localPath, false)
                 try {
                     loaded = playlistModel.load(localPath)
                 } catch (error) {
-                    setStatusBarMessage(String(error), true)
+                    showToast(String(error), true)
                     return false
                 }
             }
@@ -3632,16 +3577,16 @@ ApplicationWindow {
                 addRecentPlaylist(fileUrl)
                 playlistView.currentIndex = -1
                 loadDraftFromSelection()
-                setStatusBarMessage("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
+                showToast("Opened " + playlistModel.name + " (" + playlistModel.count + " fragments).", false)
             } catch (error) {
-                setStatusBarMessage(String(error), true)
+                showToast(String(error), true)
                 return false
             }
             return true
         }
 
         removeRecentPlaylist(fileUrl)
-        setStatusBarMessage("Could not open " + fileUrl.toString(), true)
+        showToast("Could not open " + fileUrl.toString(), true)
         return false
     }
 
@@ -3925,5 +3870,56 @@ ApplicationWindow {
         playbackControlsHideTimer.stop()
         if (playbackWindow.visible && playback.playing)
             playbackControlsHideTimer.start()
+    }
+
+    // Toast notification overlay
+    Timer {
+        id: toastTimer
+        interval: 3500
+        repeat: false
+        onTriggered: toastMessage = ""
+    }
+
+    Rectangle {
+        id: toastBar
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: 24
+        width: Math.min(toastRow.implicitWidth + 32, parent.width - 48)
+        height: 40
+        radius: 10
+        color: toastIsError ? theme.danger : (currentThemeName === "Dark" ? "#2a2f3a" : "#1e2330")
+        border.color: toastIsError ? Qt.darker(theme.danger, 1.2) : "#3a4055"
+        visible: toastMessage.length > 0
+        opacity: visible ? 1 : 0
+        z: 200
+
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+
+        RowLayout {
+            id: toastRow
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: 14
+            anchors.rightMargin: 8
+            spacing: 8
+
+            Label {
+                text: toastMessage
+                color: "#ffffff"
+                font.pixelSize: 12
+                elide: Text.ElideRight
+                Layout.fillWidth: true
+            }
+
+            IconButton {
+                iconName: "close"
+                darkMode: true
+                implicitWidth: 28
+                implicitHeight: 28
+                onClicked: toastMessage = ""
+            }
+        }
     }
 }
