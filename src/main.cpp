@@ -75,8 +75,10 @@ void installFileLogger()
     const std::filesystem::path path = logDirPath / "fragments.log";
     logFilePath = QString::fromStdString(path.string());
 
-    std::freopen(path.c_str(), "a", stdout);
-    std::freopen(path.c_str(), "a", stderr);
+    if (!std::freopen(path.c_str(), "a", stdout))
+        return;
+    if (!std::freopen(path.c_str(), "a", stderr))
+        return;
     qInstallMessageHandler(messageHandler);
 
     if (FILE *file = std::fopen(path.c_str(), "a")) {
