@@ -1625,22 +1625,20 @@ ApplicationWindow {
         anchors.rightMargin: 12
         anchors.topMargin: 4
         anchors.bottomMargin: 12
-        Pane {
+        Rectangle {
             id: leftPane
             anchors.left: parent.left
             anchors.top: parent.top
             anchors.bottom: statusBar.top
             anchors.bottomMargin: 8
             width: Math.round((parent.width - 14) * 0.73)
-            padding: 12
-            background: Rectangle {
-                color: theme.block
-                radius: 14
-                border.color: theme.border
-            }
+            color: theme.block
+            radius: 14
+            border.color: theme.border
 
             ColumnLayout {
                 anchors.fill: parent
+                anchors.margins: 12
                 spacing: 8
 
                 RowLayout {
@@ -1662,6 +1660,7 @@ ApplicationWindow {
                     }
 
                     Item { Layout.fillWidth: true }
+
 
                     AppButton {
                         text: "Play All"
@@ -1787,7 +1786,7 @@ ApplicationWindow {
                             color: fragmentRow.ListView.isCurrentItem ? theme.selected
                                    : (rowHover.hovered ? theme.blockAlt
                                    : (!valid ? theme.blockAlt : (index % 2 === 0 ? theme.block : theme.blockAlt2)))
-                            border.color: fragmentRow.ListView.isCurrentItem || playback.currentIndex === index ? theme.primary : (!valid ? theme.danger : theme.rowBorder)
+                            border.color: fragmentRow.ListView.isCurrentItem ? theme.primary : (!valid ? theme.danger : theme.rowBorder)
                         }
 
                         RowLayout {
@@ -1818,10 +1817,6 @@ ApplicationWindow {
                         HoverHandler {
                             id: rowHover
                             cursorShape: Qt.PointingHandCursor
-                            onHoveredChanged: {
-                                if (hovered)
-                                    selectFragment(fragmentRow.index)
-                            }
                         }
 
                         TapHandler {
@@ -1900,7 +1895,7 @@ ApplicationWindow {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 12
-                        spacing: 10
+                        spacing: 8
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -1925,10 +1920,15 @@ ApplicationWindow {
 
                         Rectangle {
                             Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            color: theme.borderSoft
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
                             Layout.preferredHeight: width * 9 / 16
                             color: theme.videoBg
-                            radius: 12
-                            border.color: theme.border
+                            clip: true
 
                             VideoOutput {
                                 id: videoOutput
@@ -1956,38 +1956,9 @@ ApplicationWindow {
                             }
                         }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: 8
-
-                            AppButton {
-                                text: "Play"
-                                primary: true
-                                enabled: selectedIndex >= 0 && draftValid
-                                onClicked: {
-                                    playback.setVideoSink(videoOutput.videoSink)
-                                    playback.previewRange(playlistView.currentIndex >= 0 ? playlistView.currentIndex : 0,
-                                                          draftStartMs / 1000,
-                                                          draftEndMs / 1000,
-                                                          draftDelayMs / 1000,
-                                                          draftDelayColor,
-                                                          draftAudioEnabled,
-                                                          draftVolume,
-                                                          draftSpeed)
-                                }
-                                Layout.fillWidth: true
-                            }
-
-                            AppButton {
-                                text: playback.playing ? "Pause" : (playback.currentIndex >= 0 ? "Play" : "Pause")
-                                enabled: playback.currentIndex >= 0
-                                onClicked: playback.playing ? playback.pause() : playback.resume()
-                            }
-                            AppButton { text: "Stop"; enabled: playback.currentIndex >= 0; onClicked: playback.stop() }
-                        }
-
                         TrimTimeline {
                             Layout.fillWidth: true
+                            Layout.topMargin: -5
                             enabled: selectedIndex >= 0 && trimTimelineDurationMs > 1
                             durationMs: trimTimelineDurationMs
                             startMs: draftStartMs
@@ -2008,6 +1979,42 @@ ApplicationWindow {
                             }
                         }
 
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: 8
+
+                            AppButton {
+                                text: playback.playing ? "Pause" : "Play"
+                                primary: true
+                                enabled: playback.playing || (selectedIndex >= 0 && draftValid)
+                                onClicked: {
+                                    if (playback.playing) {
+                                        playback.pause()
+                                    } else if (playback.currentIndex >= 0) {
+                                        playback.setVideoSink(videoOutput.videoSink)
+                                        playback.resume()
+                                    } else {
+                                        playback.setVideoSink(videoOutput.videoSink)
+                                        playback.previewRange(playlistView.currentIndex >= 0 ? playlistView.currentIndex : 0,
+                                                              draftStartMs / 1000,
+                                                              draftEndMs / 1000,
+                                                              draftDelayMs / 1000,
+                                                              draftDelayColor,
+                                                              draftAudioEnabled,
+                                                              draftVolume,
+                                                              draftSpeed)
+                                    }
+                                }
+                                Layout.fillWidth: true
+                            }
+
+                            AppButton {
+                                text: "Stop"
+                                enabled: playback.currentIndex >= 0
+                                onClicked: playback.stop()
+                            }
+                        }
+
                     }
                 }
 
@@ -2021,7 +2028,7 @@ ApplicationWindow {
                     ColumnLayout {
                         anchors.fill: parent
                         anchors.margins: 12
-                        spacing: 10
+                        spacing: 8
 
                         Label {
                             text: "Fragment Metadata"
@@ -2711,34 +2718,34 @@ ApplicationWindow {
         id: appSlider
         property int tickCount: 0
 
-        implicitHeight: 26
+        implicitHeight: 28
         hoverEnabled: true
 
         background: Item {
             x: appSlider.leftPadding
-            y: appSlider.topPadding + appSlider.availableHeight / 2 - 2
+            y: appSlider.topPadding + appSlider.availableHeight / 2 - height / 2
             width: appSlider.availableWidth
-            height: 4
+            height: 5
 
             Rectangle {
                 anchors.fill: parent
-                radius: 2
+                radius: 2.5
                 color: theme.rail
             }
 
             Rectangle {
                 width: appSlider.visualPosition * parent.width
                 height: parent.height
-                radius: 2
-                color: theme.primaryStrong
+                radius: 2.5
+                color: appSlider.enabled ? theme.primaryStrong : theme.disabled
             }
 
             Repeater {
                 model: appSlider.tickCount
                 Rectangle {
-                    width: 5
-                    height: 5
-                    radius: 2.5
+                    width: 4
+                    height: 4
+                    radius: 2
                     x: appSlider.tickCount <= 1 ? parent.width / 2 - width / 2 : (index / (appSlider.tickCount - 1)) * (parent.width - width)
                     y: parent.height / 2 - height / 2
                     color: appSlider.tickCount <= 1 || index / (appSlider.tickCount - 1) <= appSlider.visualPosition ? theme.primaryDark : theme.disabled
@@ -2749,12 +2756,15 @@ ApplicationWindow {
         handle: Rectangle {
             x: appSlider.leftPadding + appSlider.visualPosition * (appSlider.availableWidth - width)
             y: appSlider.topPadding + appSlider.availableHeight / 2 - height / 2
-            width: 18
-            height: 18
-            radius: 9
-            color: theme.block
-            border.width: 4
-            border.color: appSlider.enabled ? theme.primaryStrong : theme.disabled
+            width: 16
+            height: 16
+            radius: 8
+            color: appSlider.pressed ? theme.primary : theme.block
+            border.width: 3
+            border.color: appSlider.enabled ? (appSlider.hovered || appSlider.pressed ? theme.primaryStrong : theme.primary) : theme.disabled
+
+            Behavior on color { ColorAnimation { duration: 80 } }
+            Behavior on border.color { ColorAnimation { duration: 80 } }
 
             MouseArea {
                 anchors.fill: parent
@@ -2834,13 +2844,12 @@ ApplicationWindow {
             id: trimTrack
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
-            y: 22
-            height: 12
-            radius: 6
+            anchors.leftMargin: 10
+            anchors.rightMargin: 10
+            y: 20
+            height: 8
+            radius: 4
             color: theme.rail
-            border.color: theme.borderSoft
 
             MouseArea {
                 anchors.fill: parent
@@ -2853,46 +2862,74 @@ ApplicationWindow {
                 }
             }
 
-            Rectangle {
+            // Stripe pattern over the trim range
+            Canvas {
+                id: trimStripe
                 x: trimTimeline.xForMs(trimTimeline.startMs)
-                width: Math.max(2, trimTimeline.xForMs(trimTimeline.endMs) - x)
+                y: 0
+                width: Math.max(0, trimTimeline.xForMs(trimTimeline.endMs) - x)
                 height: parent.height
-                radius: 6
-                color: theme.primary
-                opacity: 0.78
+
+                property color stripeColor: theme.primary
+                onStripeColorChanged: requestPaint()
+                onWidthChanged: requestPaint()
+                onHeightChanged: requestPaint()
+
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.clearRect(0, 0, width, height)
+                    ctx.strokeStyle = stripeColor.toString()
+                    ctx.globalAlpha = 0.45
+                    ctx.lineWidth = 2
+                    var step = 7
+                    for (var i = -height; i < width + height; i += step) {
+                        ctx.beginPath()
+                        ctx.moveTo(i, 0)
+                        ctx.lineTo(i + height, height)
+                        ctx.stroke()
+                    }
+                }
             }
 
+            // Solid fill for the played portion
             Rectangle {
-                x: trimTimeline.xForMs(trimTimeline.positionMs) - width / 2
-                y: -8
-                width: 3
-                height: 28
-                radius: 1.5
-                color: theme.primaryDark
-                opacity: trimTimeline.controlsVisible ? 1.0 : 0.0
-
-                Behavior on opacity { NumberAnimation { duration: 100 } }
+                x: trimTimeline.xForMs(trimTimeline.startMs)
+                y: 0
+                width: Math.max(0, Math.min(
+                    trimTimeline.xForMs(trimTimeline.endMs) - trimTimeline.xForMs(trimTimeline.startMs),
+                    trimTimeline.xForMs(trimTimeline.positionMs) - trimTimeline.xForMs(trimTimeline.startMs)
+                ))
+                height: parent.height
+                color: theme.primary
+                opacity: 0.85
+                visible: trimTimeline.positionMs > trimTimeline.startMs
             }
         }
 
-        Rectangle {
+        // Start handle — thin bar + wide invisible hit area
+        Item {
             id: startHandle
             x: trimTrack.x + trimTimeline.xForMs(trimTimeline.startMs) - width / 2
-            y: trimTrack.y - 9
+            y: trimTrack.y - 8
             width: 16
-            height: 30
-            radius: 5
-            color: startDrag.pressed ? theme.primaryStrong : theme.block
-            border.width: 2
-            border.color: theme.primary
-            opacity: trimTimeline.controlsVisible ? 1.0 : 0.0
+            height: trimTrack.height + 16
 
-            Behavior on opacity { NumberAnimation { duration: 100 } }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 3
+                radius: 1.5
+                color: startDrag.pressed ? theme.primaryStrong : theme.primary
+                opacity: trimTimeline.controlsVisible ? 1.0 : 0.5
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: 80 } }
+            }
 
             MouseArea {
                 id: startDrag
                 anchors.fill: parent
-                enabled: trimTimeline.controlsVisible
+                enabled: trimTimeline.enabled
                 cursorShape: Qt.SizeHorCursor
                 preventStealing: true
                 onPositionChanged: {
@@ -2906,24 +2943,30 @@ ApplicationWindow {
             }
         }
 
-        Rectangle {
+        // End handle — thin bar + wide invisible hit area
+        Item {
             id: endHandle
             x: trimTrack.x + trimTimeline.xForMs(trimTimeline.endMs) - width / 2
-            y: trimTrack.y - 9
+            y: trimTrack.y - 8
             width: 16
-            height: 30
-            radius: 5
-            color: endDrag.pressed ? theme.primaryStrong : theme.block
-            border.width: 2
-            border.color: theme.primary
-            opacity: trimTimeline.controlsVisible ? 1.0 : 0.0
+            height: trimTrack.height + 16
 
-            Behavior on opacity { NumberAnimation { duration: 100 } }
+            Rectangle {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                width: 3
+                radius: 1.5
+                color: endDrag.pressed ? theme.primaryStrong : theme.primary
+                opacity: trimTimeline.controlsVisible ? 1.0 : 0.5
+                Behavior on opacity { NumberAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: 80 } }
+            }
 
             MouseArea {
                 id: endDrag
                 anchors.fill: parent
-                enabled: trimTimeline.controlsVisible
+                enabled: trimTimeline.enabled
                 cursorShape: Qt.SizeHorCursor
                 preventStealing: true
                 onPositionChanged: {
@@ -2942,26 +2985,35 @@ ApplicationWindow {
             anchors.right: parent.right
             anchors.top: trimTrack.bottom
             anchors.topMargin: 10
-            spacing: 8
+            spacing: 4
 
             Label {
-                text: "Start: " + formatTimeMs(trimTimeline.startMs)
-                color: theme.bodyText
-                font.pixelSize: 12
+                text: formatTimeMs(trimTimeline.startMs)
+                color: theme.mutedText
+                font.pixelSize: 11
                 font.family: "monospace"
-                horizontalAlignment: Text.AlignLeft
-                Layout.preferredWidth: 140
+                Layout.preferredWidth: 90
             }
 
             Item { Layout.fillWidth: true }
 
             Label {
-                text: "End: " + formatTimeMs(trimTimeline.endMs)
+                text: formatTimeMs(trimTimeline.endMs - trimTimeline.startMs)
                 color: theme.bodyText
-                font.pixelSize: 12
+                font.pixelSize: 11
+                font.family: "monospace"
+                horizontalAlignment: Text.AlignHCenter
+            }
+
+            Item { Layout.fillWidth: true }
+
+            Label {
+                text: formatTimeMs(trimTimeline.endMs)
+                color: theme.mutedText
+                font.pixelSize: 11
                 font.family: "monospace"
                 horizontalAlignment: Text.AlignRight
-                Layout.preferredWidth: 140
+                Layout.preferredWidth: 90
             }
         }
 
