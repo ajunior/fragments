@@ -26,6 +26,10 @@ The playlist format is JSON:
 ```json
 {
   "version": 1,
+  "name": "playlist_one",
+  "repeat": false,
+  "createdAt": "2026-06-05T18:23:00.000Z",
+  "updatedAt": "2026-06-05T18:23:00.000Z",
   "items": [
     {
       "file": "file:///path/to/video-a.mp4",
@@ -35,11 +39,15 @@ The playlist format is JSON:
       "delayColor": "#000000",
       "audio": true,
       "volume": 1.0,
-      "speed": 1.0
+      "speed": 1.0,
+      "label": "Opening",
+      "notes": "Use the first clean take."
     }
   ]
 }
 ```
+
+The JSON Schema is available at [`docs/playlist.schema.json`](docs/playlist.schema.json).
 
 ## Build
 
@@ -66,6 +74,7 @@ cmake --build build-desktop
 - Duplicate fragments
 - Keyboard shortcuts for save/open, undo/redo, fragment preview, duplicate, delete, reorder, and setting start/end from the playhead
 - Save and load playlist JSON files
+  - Playlist files are validated against the documented JSON structure when opened
 - Reopen recent playlists
 - Recover missing local media by relinking individual files or scanning a folder
 - Play the playlist sequentially with optional delay before each item, so it behaves like one assembled video made of fragments
@@ -74,7 +83,7 @@ cmake --build build-desktop
   - Audio-only fragments render over the chosen delay color; muted or video-only fragments get silent audio
   - Fragment delays export as colored/silent gaps before the fragment starts
 - Export valid local playlists to an animated GIF preview
-  - GIF export has no audio, renders at 15 fps, scales to 640 px wide, and uses an ffmpeg palette pass
+  - GIF export has no audio, supports 15-60 fps, offers low/medium/high quality presets, and uses an ffmpeg palette pass
 
 ## Package
 
