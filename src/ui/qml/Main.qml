@@ -2010,10 +2010,11 @@ ApplicationWindow {
                             Layout.fillWidth: true
                             spacing: 8
 
-                            AppButton {
-                                text: playback.playing ? "Pause" : "Play"
-                                primary: true
+                            IconButton {
+                                iconName: playback.playing ? "pause" : "play"
+                                toolTip: playback.playing ? "Pause" : "Play"
                                 enabled: playback.playing || (selectedIndex >= 0 && draftValid)
+                                Layout.fillWidth: true
                                 onClicked: {
                                     if (playback.playing) {
                                         playback.pause()
@@ -2032,13 +2033,33 @@ ApplicationWindow {
                                                               draftSpeed)
                                     }
                                 }
-                                Layout.fillWidth: true
+                            }
+
+                            IconButton {
+                                iconName: "stop"
+                                toolTip: "Stop"
+                                enabled: playback.currentIndex >= 0
+                                onClicked: playback.stop()
                             }
 
                             AppButton {
-                                text: "Stop"
-                                enabled: playback.currentIndex >= 0
-                                onClicked: playback.stop()
+                                text: "Set Start"
+                                toolTip: "Set start from playhead (I)"
+                                enabled: selectedIndex >= 0
+                                onClicked: {
+                                    draftStartMs = Math.max(0, Math.round(playback.player.position))
+                                    draftDirty = true
+                                }
+                            }
+
+                            AppButton {
+                                text: "Set End"
+                                toolTip: "Set end from playhead (O)"
+                                enabled: selectedIndex >= 0
+                                onClicked: {
+                                    draftEndMs = Math.round(playback.player.position)
+                                    draftDirty = true
+                                }
                             }
                         }
 
@@ -2057,12 +2078,31 @@ ApplicationWindow {
                         anchors.margins: 12
                         spacing: 8
 
-                        Label {
-                            text: "Fragment Metadata"
-                            color: theme.text
-                            font.pixelSize: 16
-                            font.bold: true
+                        RowLayout {
                             Layout.fillWidth: true
+                            spacing: 8
+
+                            Label {
+                                text: "Fragment Metadata"
+                                color: theme.text
+                                font.pixelSize: 16
+                                font.bold: true
+                                Layout.fillWidth: true
+                            }
+
+                            IconButton {
+                                iconName: "undo"
+                                toolTip: "Reset"
+                                enabled: selectedIndex >= 0 && draftDirty
+                                onClicked: loadDraftFromSelection()
+                            }
+
+                            IconButton {
+                                iconName: "save"
+                                toolTip: "Save"
+                                enabled: selectedIndex >= 0 && draftDirty && draftValid
+                                onClicked: updateSelectedMetadata()
+                            }
                         }
 
                         Rectangle {
@@ -2167,57 +2207,25 @@ ApplicationWindow {
                             }
 
                         Label { text: "Start"; color: theme.bodyText }
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 8
-
-                            TimeField {
-                                valueMs: draftStartMs
-                                enabled: selectedIndex >= 0
-                                onCommitted: function(ms) {
-                                    draftStartMs = ms
-                                    draftDirty = true
-                                }
-                                Layout.fillWidth: true
+                        TimeField {
+                            valueMs: draftStartMs
+                            enabled: selectedIndex >= 0
+                            onCommitted: function(ms) {
+                                draftStartMs = ms
+                                draftDirty = true
                             }
-
-                            AppButton {
-                                text: "Set"
-                                toolTip: "Set start from playhead"
-                                enabled: selectedIndex >= 0
-                                implicitWidth: 58
-                                onClicked: {
-                                    draftStartMs = Math.max(0, Math.round(playback.player.position))
-                                    draftDirty = true
-                                }
-                            }
+                            Layout.fillWidth: true
                         }
 
                         Label { text: "End"; color: theme.bodyText }
-                        RowLayout {
+                        TimeField {
+                            valueMs: draftEndMs
+                            enabled: selectedIndex >= 0
+                            onCommitted: function(ms) {
+                                draftEndMs = ms
+                                draftDirty = true
+                            }
                             Layout.fillWidth: true
-                            spacing: 8
-
-                            TimeField {
-                                valueMs: draftEndMs
-                                enabled: selectedIndex >= 0
-                                onCommitted: function(ms) {
-                                    draftEndMs = ms
-                                    draftDirty = true
-                                }
-                                Layout.fillWidth: true
-                            }
-
-                            AppButton {
-                                text: "Set"
-                                toolTip: "Set end from playhead"
-                                enabled: selectedIndex >= 0
-                                implicitWidth: 58
-                                onClicked: {
-                                    draftEndMs = Math.round(playback.player.position)
-                                    draftDirty = true
-                                }
-                            }
                         }
 
                         Label { text: "Delay"; color: theme.bodyText }
@@ -2351,34 +2359,6 @@ ApplicationWindow {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: 2
-                            Layout.preferredHeight: 1
-                            color: theme.borderSoft
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            Layout.columnSpan: 2
-                            spacing: 8
-
-                            Item { Layout.fillWidth: true }
-
-                            IconButton {
-                                iconName: "undo"
-                                toolTip: "Reset"
-                                enabled: selectedIndex >= 0 && draftDirty
-                                onClicked: loadDraftFromSelection()
-                            }
-
-                            IconButton {
-                                iconName: "save"
-                                toolTip: "Save"
-                                enabled: selectedIndex >= 0 && draftDirty && draftValid
-                                onClicked: updateSelectedMetadata()
-                            }
-                        }
 
                     }
                 }
@@ -2678,7 +2658,10 @@ ApplicationWindow {
             "arrow-down": "arrow_downward",
             "ios_share": "ios_share",
             "prev": "skip_previous",
-            "next": "skip_next"
+            "next": "skip_next",
+            "play": "play_arrow",
+            "pause": "pause",
+            "stop": "stop"
         })
 
         implicitWidth: 38
