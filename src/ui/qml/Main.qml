@@ -2057,10 +2057,8 @@ ApplicationWindow {
 
                             Item { Layout.fillWidth: true }
 
-                            IconButton {
-                                iconName: "open"
-                                accentOnHover: true
-                                toolTip: "Open in video window"
+                            AppButton {
+                                text: "Open in Window"
                                 enabled: selectedIndex >= 0
                                 onClicked: openSelectedInPlaybackWindow()
                             }
