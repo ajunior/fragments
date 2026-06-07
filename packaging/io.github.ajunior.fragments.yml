@@ -1,0 +1,37 @@
+app-id: io.github.ajunior.fragments
+runtime: org.kde.Platform
+runtime-version: '6.9'
+sdk: org.kde.Sdk
+command: fragments
+
+# Provides ffmpeg and ffprobe for MP4 and GIF export.
+# Automatically installed alongside the app.
+add-extensions:
+  org.freedesktop.Platform.ffmpeg-full:
+    directory: lib/ffmpeg
+    version: '24.08'
+    add-ld-path: .
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --socket=pulseaudio
+  - --device=dri
+  # Access to home directory so users can open media files from anywhere.
+  - --filesystem=home
+
+modules:
+  - name: fragments
+    buildsystem: cmake-ninja
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DBUILD_TESTING=OFF
+    post-install:
+      # Required mount point for the ffmpeg-full extension.
+      - mkdir -p /app/lib/ffmpeg
+    sources:
+      # For local testing: point to the repository root.
+      # For a Flathub submission: replace with a type: git source pointing to a tagged commit.
+      - type: dir
+        path: ..

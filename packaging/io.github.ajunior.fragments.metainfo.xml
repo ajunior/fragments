@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.ajunior.fragments</id>
+  <name>Fragments</name>
+  <summary>Scripted playback for media fragments</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <developer id="io.github.ajunior">
+    <name>Adjamilton Junior</name>
+  </developer>
+  <launchable type="desktop-id">io.github.ajunior.fragments.desktop</launchable>
+  <url type="homepage">https://github.com/ajunior/fragments</url>
+  <url type="bugtracker">https://github.com/ajunior/fragments/issues</url>
+  <description>
+    <p>
+      Fragments is a Qt/QML media player for scripted playback of video and audio snippets.
+      It lets users build playlists from selected ranges of source media, trim fragments
+      visually, label and annotate cues, recover missing media, and export a combined MP4
+      render through ffmpeg.
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>Fragment list with trim timeline and source preview</caption>
+      <image>https://raw.githubusercontent.com/ajunior/fragments/main/docs/screenshots/playlist.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Detached playback window during playlist playback</caption>
+      <image>https://raw.githubusercontent.com/ajunior/fragments/main/docs/screenshots/playback.png</image>
+    </screenshot>
+  </screenshots>
+
+  <releases>
+    <release version="0.44.6" date="2026-05-20"/>
+  </releases>
+  <content_rating type="oars-1.1"/>
+</component>

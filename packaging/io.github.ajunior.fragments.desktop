@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Fragments
+Comment=Scripted playback for media fragments
+Exec=fragments
+Icon=io.github.ajunior.fragments
+Terminal=false
+Categories=AudioVideo;Video;Player;Qt;
+StartupNotify=true
