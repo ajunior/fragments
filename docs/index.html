@@ -189,7 +189,11 @@
         </article>
         <article>
           <h3>Linux</h3>
-          <p>Install Fragments with Flatpak. The Flatpak package includes the runtime pieces needed by the app and the FFmpeg extension used for export.</p>
+          <p>Install Fragments with Flatpak. The package includes Qt, GStreamer, and FFmpeg — no extra dependencies needed.</p>
+          <pre><code>flatpak remote-add --if-not-exists fragments \
+  https://ajunior.github.io/fragments/fragments.flatpakrepo
+flatpak install fragments io.github.ajunior.fragments</code></pre>
+          <p>Or <a href="fragments.flatpakrepo">open the remote file</a> directly in GNOME Software or KDE Discover.</p>
         </article>
       </div>
       <div class="dependency-note">
@@ -210,7 +214,7 @@
       <div class="download-actions" aria-label="Download options">
         <a class="button primary" href="https://github.com/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-windows-x86_64.zip">Windows</a>
         <a class="button primary" href="https://github.com/ajunior/fragments/releases/download/v0.44.6/fragments-0.44.6-macos-universal.dmg">macOS</a>
-        <a class="button primary" href="https://flathub.org/apps/io.github.ajunior.fragments">Linux Flatpak</a>
+        <a class="button primary" href="fragments.flatpakrepo">Linux Flatpak</a>
       </div>
     </section>
   </main>
